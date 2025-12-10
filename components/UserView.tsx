@@ -4,7 +4,7 @@ import { useCart } from '../hooks/useCart';
 import { mockProducts, mockSubscriptionBoxes, mockUser, mockOrders, mockSourcedProducts } from '../mock/data';
 import { Product, SubscriptionBox, SubscriptionFrequency, User, CartItem, Order, AISuggestion, Recipe } from '../types';
 import { getPersonalizedSuggestions, generateRecipes } from '../services/geminiService';
-import { ShoppingCartIcon, LeafIcon, UserIcon, TrashIcon, PlusIcon, MinusIcon, ArrowRightIcon, MapPinIcon, HeartIcon, CogIcon, BookOpenIcon, HomeModernIcon } from './Icons';
+import { ShoppingCartIcon, LeafIcon, UserIcon, TrashIcon, PlusIcon, MinusIcon, ArrowRightIcon, MapPinIcon, HeartIcon, CogIcon, BookOpenIcon, HomeModernIcon, SparklesIcon, CheckBadgeIcon, PlusCircleIcon } from './Icons';
 
 type UserViewType = 'SHOP' | 'SUBSCRIPTIONS' | 'CART' | 'PROFILE' | 'AUTH' | 'CHECKOUT' | 'GATEWAY' | 'CONFIRMATION';
 type OrderWindow = 'Wednesday' | 'Sunday';
@@ -79,7 +79,7 @@ const Header: React.FC<{
                                 </button>
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 invisible group-hover:visible">
                                      <button onClick={() => onNavigate('PROFILE')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">My Dashboard</button>
-                                     <button onClick={onSignOut} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">Sign Out</button>
+                                     <button onClick={onSignOut} className="block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left">Sign Out</button>
                                 </div>
                             </div>
                         ) : (
@@ -146,31 +146,74 @@ const CountdownTimer: React.FC<{
     );
 };
 
-const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product) => void; isRegular: boolean; onToggleRegular: (productId: string) => void; available: boolean }> = ({ product, onAddToCart, isRegular, onToggleRegular, available }) => (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden transform transition-transform duration-300 group ${!available ? 'opacity-60 pointer-events-none grayscale' : 'hover:scale-105'}`}>
-        <div className="relative">
-            <img src={product.imageUrl} alt={product.name} className="w-full h-48 object-cover" />
+const ProductCard: React.FC<{ 
+    product: Product; 
+    cartItem?: CartItem;
+    onAddToCart: (product: Product) => void; 
+    onUpdateQuantity: (cartId: string, quantity: number) => void;
+    onRemoveFromCart: (cartId: string) => void;
+    isRegular: boolean; 
+    onToggleRegular: (productId: string) => void; 
+    available: boolean 
+}> = ({ product, cartItem, onAddToCart, onUpdateQuantity, onRemoveFromCart, isRegular, onToggleRegular, available }) => (
+    <div className={`bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full group ${!available ? 'opacity-60 pointer-events-none grayscale' : 'hover:shadow-md transition-shadow'}`}>
+        <div className="relative h-20 w-full bg-gray-100">
+            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
              {available && (
                 <button 
-                    onClick={() => onToggleRegular(product.id)}
-                    className={`absolute top-2 right-2 p-2 rounded-full transition-all ${isRegular ? 'bg-red-500 text-white' : 'bg-white/70 text-gray-700 hover:bg-white'}`}
+                    onClick={(e) => { e.stopPropagation(); onToggleRegular(product.id); }}
+                    className={`absolute top-1.5 right-1.5 p-1.5 rounded-full shadow-sm transition-all ${isRegular ? 'bg-red-500 text-white' : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-white'}`}
                     aria-label={isRegular ? 'Remove from regulars' : 'Add to regulars'}
                 >
-                    <HeartIcon className="w-5 h-5" filled={isRegular} />
+                    <HeartIcon className="w-3 h-3" filled={isRegular} />
                 </button>
              )}
              {!available && (
-                 <div className="absolute inset-0 bg-gray-900 bg-opacity-30 flex items-center justify-center">
-                     <span className="bg-gray-800 text-white px-4 py-2 rounded-lg font-bold">Out of Stock in Area</span>
+                 <div className="absolute inset-0 bg-gray-900 bg-opacity-10 flex items-center justify-center">
+                     <span className="bg-gray-800 text-white text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wide">Out of Stock</span>
                  </div>
              )}
         </div>
-        <div className="p-4">
-            <h3 className="text-lg font-semibold text-gray-800 truncate" title={product.name}>{product.name}</h3>
-            <p className="text-sm text-gray-500 truncate">{product.farmer}</p>
-            <div className="flex justify-between items-center mt-4">
-                <p className="text-lg font-bold text-gray-900">${product.price.toFixed(2)} <span className="text-sm font-normal text-gray-600">/ {product.unit}</span></p>
-                <button disabled={!available} onClick={() => onAddToCart(product)} className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 transition disabled:bg-gray-400">Add</button>
+        <div className="p-3 flex flex-col flex-grow gap-1">
+            <h3 className="text-xs font-bold text-gray-800 leading-tight">
+                {product.name} <span className="font-normal text-gray-500">| {product.unit}</span>
+            </h3>
+            
+            <p className="text-[10px] text-gray-500 font-medium truncate" title={product.farmer}>{product.farmer}</p>
+            
+            <div className="flex justify-between items-center mt-2">
+                <p className="text-sm font-bold text-gray-900">${product.price.toFixed(2)}</p>
+                
+                {cartItem ? (
+                    <div className="flex items-center gap-2 bg-white shadow-sm rounded-lg border border-gray-200 px-2 py-1 h-8">
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (cartItem.quantity === 1) onRemoveFromCart(cartItem.cartId);
+                                else onUpdateQuantity(cartItem.cartId, cartItem.quantity - 1);
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                        >
+                            {cartItem.quantity === 1 ? <TrashIcon className="w-4 h-4" /> : <MinusIcon className="w-4 h-4" />}
+                        </button>
+                        <span className="text-sm font-bold w-4 text-center">{cartItem.quantity}</span>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
+                            className="text-green-600 hover:text-green-700"
+                        >
+                            <PlusCircleIcon className="w-5 h-5" />
+                        </button>
+                    </div>
+                ) : (
+                    <button 
+                        disabled={!available}
+                        onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
+                        className="bg-green-100 text-green-700 hover:bg-green-200 rounded-full p-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Add to cart"
+                    >
+                        <PlusIcon className="w-5 h-5" />
+                    </button>
+                )}
             </div>
         </div>
     </div>
@@ -707,7 +750,7 @@ const ProfileView: React.FC<{
                         <h3 className="text-xl font-semibold mb-4">My Regulars</h3>
                         <p className="text-gray-600 mb-4 text-sm">These are your favorite items. You can quickly add them to your cart from here.</p>
                         {regularProducts.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {regularProducts.map(product => (
                                    <div key={product.id} className="bg-gray-50 p-3 rounded-lg border flex items-center justify-between">
                                        <div className="flex items-center gap-3">
@@ -812,6 +855,112 @@ const ProfileView: React.FC<{
     );
 };
 // #endregion
+
+const FeaturedProducts: React.FC<{ 
+    products: Product[], 
+    cartItems: CartItem[],
+    onAddToCart: (product: Product) => void,
+    onUpdateQuantity: (cartId: string, quantity: number) => void,
+    onRemoveFromCart: (cartId: string) => void,
+    onToggleRegular: (id: string) => void,
+    regulars: string[]
+}> = ({ products, cartItems, onAddToCart, onUpdateQuantity, onRemoveFromCart, onToggleRegular, regulars }) => (
+    <div className="mb-16">
+        <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-800">Featured products</h2>
+            <button onClick={() => document.getElementById('catalog')?.scrollIntoView({behavior: 'smooth'})} className="text-indigo-600 hover:text-indigo-800 font-semibold">View all</button>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-4">
+            {products.slice(0, 7).map(product => (
+                <ProductCard 
+                    key={product.id}
+                    product={product}
+                    cartItem={cartItems.find(i => i.id === product.id && i.type === 'product')}
+                    onAddToCart={onAddToCart}
+                    onUpdateQuantity={onUpdateQuantity}
+                    onRemoveFromCart={onRemoveFromCart}
+                    isRegular={regulars.includes(product.id)}
+                    onToggleRegular={onToggleRegular}
+                    available={product.status === 'Available'}
+                />
+            ))}
+        </div>
+    </div>
+);
+
+const PromoSection: React.FC<{ onStartCustomBox: () => void, onNavigate: (view: UserViewType) => void }> = ({ onStartCustomBox, onNavigate }) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-0 mb-16">
+        <div className="relative h-[400px] group overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?q=80&w=1000&auto=format&fit=crop" alt="Local farmers" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-black/30 flex flex-col justify-center items-center text-center p-8">
+                <h3 className="text-3xl font-bold text-white mb-4">Pick a produce box that works for you</h3>
+                <p className="text-white text-lg mb-6 max-w-sm">Skip the hassle of choosing one by one.</p>
+                <button onClick={() => onNavigate('SUBSCRIPTIONS')} className="bg-white/90 text-gray-900 px-8 py-3 font-semibold hover:bg-white transition-colors">View Grocery Boxes</button>
+            </div>
+        </div>
+        <div className="relative h-[400px] group overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop" alt="Farm fresh quality" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-black/30 flex flex-col justify-center items-center text-center p-8">
+                <h3 className="text-3xl font-bold text-white mb-4">Customize your own grocery box</h3>
+                <button onClick={onStartCustomBox} className="bg-white/90 text-gray-900 px-8 py-3 font-semibold hover:bg-white transition-colors">Get a quote</button>
+            </div>
+        </div>
+    </div>
+);
+
+const MissionSection: React.FC = () => (
+    <div className="bg-gray-100 py-20 px-6 text-center">
+        <div className="max-w-3xl mx-auto">
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-8 leading-tight">
+                We believe in fostering connections between local producers and consumers for a healthier, sustainable community.
+            </h2>
+            <button onClick={() => document.getElementById('catalog')?.scrollIntoView({behavior: 'smooth'})} className="text-gray-900 font-semibold text-lg flex items-center justify-center gap-2 hover:gap-4 transition-all">
+                Shop now <ArrowRightIcon className="w-5 h-5" />
+            </button>
+        </div>
+    </div>
+);
+
+const Footer: React.FC = () => (
+    <footer className="bg-white border-t py-16 px-6">
+        <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div>
+                <ul className="space-y-4 text-gray-600">
+                    <li><a href="#" className="hover:text-gray-900">Home</a></li>
+                    <li><a href="#" className="hover:text-gray-900">Catalog</a></li>
+                    <li><a href="#" className="hover:text-gray-900">Contact</a></li>
+                </ul>
+            </div>
+            <div>
+                <ul className="space-y-4 text-gray-600">
+                    <li><a href="#" className="hover:text-gray-900">About us</a></li>
+                    <li><a href="#" className="hover:text-gray-900">Return policy</a></li>
+                    <li><a href="#" className="hover:text-gray-900">Help & Questions</a></li>
+                </ul>
+            </div>
+            <div className="md:col-span-2">
+                <h4 className="text-xl font-semibold text-gray-900 mb-4">Join our community</h4>
+                <div className="flex gap-4">
+                    <input type="email" placeholder="Email address" className="flex-1 p-3 border border-gray-300 focus:outline-none focus:border-gray-500" />
+                    <button className="bg-gray-900 text-white px-6 py-3 font-semibold hover:bg-gray-800 transition-colors">Sign up</button>
+                </div>
+            </div>
+        </div>
+        <div className="container mx-auto mt-16 pt-8 border-t flex flex-col md:flex-row justify-between items-center text-gray-500 text-sm">
+            <p>&copy; 2025, Powered by Farm2Flat</p>
+            <div className="flex gap-6 mt-4 md:mt-0">
+                {/* Social Icons Placeholders */}
+                <span className="cursor-pointer hover:text-gray-900">Instagram</span>
+                <span className="cursor-pointer hover:text-gray-900">YouTube</span>
+                <span className="cursor-pointer hover:text-gray-900">TikTok</span>
+                <span className="cursor-pointer hover:text-gray-900">Twitter</span>
+            </div>
+        </div>
+    </footer>
+);
+
+// ... (Rest of UserView.tsx components like RecipeDetailModal and CustomBoxBuilderModal remain mostly unchanged) ...
+// Re-inserting required components to make file complete and runnable without missing definitions
 
 const RecipeDetailModal: React.FC<{
     recipe: Recipe;
@@ -919,6 +1068,294 @@ const RecipeDetailModal: React.FC<{
     );
 };
 
+const CustomBoxBuilderModal: React.FC<{
+    onClose: () => void;
+    products: Product[];
+    onComplete: (items: { product: Product, quantity: number }[]) => void;
+}> = ({ onClose, products, onComplete }) => {
+    const [step, setStep] = useState(1);
+    const [preferences, setPreferences] = useState({
+        familySize: 2,
+        budget: 100,
+        goal: 'Balanced Diet',
+        frequency: 'Weekly'
+    });
+    const [selectedItems, setSelectedItems] = useState<{ [id: string]: number }>({});
+    const [genieDiscount, setGenieDiscount] = useState(false);
+    const [recipes, setRecipes] = useState<Recipe[]>([]);
+    const [loadingRecipes, setLoadingRecipes] = useState(false);
+    
+    // Step 2: Product Search
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const handlePreferenceChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setPreferences(prev => ({ 
+            ...prev, 
+            [name]: (name === 'familySize' || name === 'budget') ? Number(value) : value 
+        }));
+    };
+
+    const handleAddItem = (productId: string) => {
+        setSelectedItems(prev => ({ ...prev, [productId]: (prev[productId] || 0) + 1 }));
+    };
+
+    const handleRemoveItem = (productId: string) => {
+        setSelectedItems(prev => {
+            const newItems = { ...prev };
+            if (newItems[productId] > 1) {
+                newItems[productId]--;
+            } else {
+                delete newItems[productId];
+            }
+            return newItems;
+        });
+    };
+
+    const cartTotal = useMemo(() => {
+        return Object.entries(selectedItems).reduce((sum: number, [id, qty]: [string, number]) => {
+            const product = products.find(p => p.id === id);
+            return sum + (product ? product.price * qty : 0);
+        }, 0);
+    }, [selectedItems, products]);
+
+    const marketPrice = cartTotal * 1.25; // Simulating 25% higher market price
+    const savings = marketPrice - cartTotal;
+    const finalPrice = genieDiscount ? cartTotal * 0.9 : cartTotal;
+    
+    const totalQuantity = Object.values(selectedItems).reduce((sum: number, qty: number) => sum + qty, 0);
+    const estimatedDays = preferences.familySize > 0 
+        ? Math.round((totalQuantity * 1.5) / Number(preferences.familySize)) 
+        : 0;
+
+    const filteredProducts = useMemo(() => {
+        return products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }, [products, searchTerm]);
+
+    const generateAIInsights = async () => {
+        setLoadingRecipes(true);
+        const selectedProductsList = Object.keys(selectedItems).map(id => products.find(p => p.id === id)).filter((p): p is Product => !!p);
+        // Only fetch recipes if we have items
+        if(selectedProductsList.length > 0) {
+             const result = await generateRecipes(selectedProductsList.slice(0, 5)); // Limit to first 5 for speed
+             setRecipes(result);
+        }
+        setLoadingRecipes(false);
+    };
+
+    const handleNext = async () => {
+        if (step === 2) {
+            await generateAIInsights();
+        }
+        if (step < 4) {
+            setStep(step + 1);
+        } else {
+            // Add to cart and close
+            const items = Object.entries(selectedItems).map(([id, qty]) => {
+                const product = products.find(p => p.id === id);
+                return product ? { product, quantity: qty } : null;
+            }).filter((i): i is { product: Product, quantity: number } => i !== null);
+            
+            onComplete(items);
+        }
+    };
+
+    const handleAskGenie = () => {
+        // Simulate API call delay for effect
+        setTimeout(() => {
+            setGenieDiscount(true);
+        }, 800);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[50] p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden">
+                {/* Header */}
+                <div className="bg-green-600 text-white p-4 flex justify-between items-center">
+                    <h2 className="text-xl font-bold flex items-center gap-2">
+                        <SparklesIcon className="w-6 h-6"/> Custom Box Builder
+                    </h2>
+                    <button onClick={onClose} className="text-white hover:text-gray-200 font-bold text-xl">&times;</button>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="bg-gray-100 h-2 w-full">
+                    <div className="bg-green-500 h-2 transition-all duration-500" style={{ width: `${(step / 4) * 100}%` }}></div>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto p-6">
+                    {step === 1 && (
+                        <div className="max-w-lg mx-auto">
+                            <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">Tell us about your needs</h3>
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">Family Size</label>
+                                    <input type="number" name="familySize" value={preferences.familySize} onChange={handlePreferenceChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" min="1" />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">Weekly Grocery Budget ($)</label>
+                                    <input type="number" name="budget" value={preferences.budget} onChange={handlePreferenceChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">Primary Goal</label>
+                                    <select name="goal" value={preferences.goal} onChange={handlePreferenceChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white">
+                                        <option>Reduced Price</option>
+                                        <option>Balanced Diet</option>
+                                        <option>Culture Specific</option>
+                                        <option>Recipe Focused</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 2 && (
+                        <div className="flex flex-col md:flex-row h-full gap-6">
+                            <div className="md:w-2/3 flex flex-col">
+                                <div className="mb-4">
+                                    <input type="text" placeholder="Search products..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full p-3 border rounded-lg shadow-sm" />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto pb-4">
+                                    {filteredProducts.map(p => (
+                                        <div key={p.id} className="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition">
+                                            <img src={p.imageUrl} alt={p.name} className="w-full h-32 object-cover rounded mb-2"/>
+                                            <h4 className="font-bold text-sm truncate">{p.name}</h4>
+                                            <div className="flex justify-between items-center mt-2">
+                                                <span className="text-gray-700 font-semibold">${p.price.toFixed(2)}</span>
+                                                <button onClick={() => handleAddItem(p.id)} className="bg-green-100 text-green-700 p-1.5 rounded hover:bg-green-200"><PlusIcon className="w-4 h-4"/></button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="md:w-1/3 bg-gray-50 p-4 rounded-lg border overflow-y-auto">
+                                <h3 className="font-bold text-lg mb-4">Your Box</h3>
+                                {Object.keys(selectedItems).length === 0 ? <p className="text-gray-500 text-sm">Your box is empty.</p> : (
+                                    <ul className="space-y-3">
+                                        {Object.entries(selectedItems).map(([id, qty]) => {
+                                            const p = products.find(prod => prod.id === id);
+                                            if (!p) return null;
+                                            return (
+                                                <li key={id} className="flex justify-between items-center text-sm">
+                                                    <span>{p.name} (x{qty})</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-semibold">${(p.price * qty).toFixed(2)}</span>
+                                                        <button onClick={() => handleRemoveItem(id)} className="text-red-500"><MinusIcon className="w-3 h-3"/></button>
+                                                    </div>
+                                                </li>
+                                            )
+                                        })}
+                                    </ul>
+                                )}
+                                <div className="mt-6 pt-4 border-t border-gray-300">
+                                    <div className="flex justify-between font-bold text-lg">
+                                        <span>Total:</span>
+                                        <span>${cartTotal.toFixed(2)}</span>
+                                    </div>
+                                    <p className="text-sm text-green-600 mt-1">Est. Market Price: ${marketPrice.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <div className="text-center max-w-4xl mx-auto">
+                            <h3 className="text-2xl font-bold text-gray-800 mb-6">AI Insights for Your Box</h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <div className="bg-green-50 p-6 rounded-xl border border-green-200">
+                                    <h4 className="text-lg font-bold text-green-800 mb-2">Total Savings</h4>
+                                    <p className="text-3xl font-bold text-green-600">${savings.toFixed(2)}</p>
+                                    <p className="text-sm text-gray-600">vs. Average Market Price</p>
+                                </div>
+                                <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                                    <h4 className="text-lg font-bold text-blue-800 mb-2">Family Coverage</h4>
+                                    <p className="text-3xl font-bold text-blue-600">~{estimatedDays} Days</p>
+                                    <p className="text-sm text-gray-600">Based on {preferences.familySize} people</p>
+                                </div>
+                                <div className="bg-purple-50 p-6 rounded-xl border border-purple-200">
+                                    <h4 className="text-lg font-bold text-purple-800 mb-2">Goal Alignment</h4>
+                                    <p className="text-xl font-bold text-purple-600">{preferences.goal}</p>
+                                    <p className="text-sm text-gray-600">Perfectly matched!</p>
+                                </div>
+                            </div>
+
+                            <div className="text-left">
+                                <h4 className="text-xl font-bold mb-4 flex items-center gap-2"><SparklesIcon className="w-5 h-5 text-indigo-500"/> Suggested Recipes</h4>
+                                {loadingRecipes ? <p>Asking the chef...</p> : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {recipes.slice(0, 2).map(r => (
+                                            <div key={r.id} className="bg-white p-4 rounded-lg border shadow-sm">
+                                                <h5 className="font-bold text-gray-800">{r.name}</h5>
+                                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{r.description}</p>
+                                            </div>
+                                        ))}
+                                        {recipes.length === 0 && <p className="text-gray-500">Add more items to get specific recipe ideas!</p>}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 4 && (
+                        <div className="max-w-lg mx-auto text-center pt-8">
+                            <h3 className="text-2xl font-bold text-gray-800 mb-6">Finalize Your Plan</h3>
+                            
+                            <div className="mb-8">
+                                <label className="block text-gray-700 font-semibold mb-2">How often do you want this?</label>
+                                <select name="frequency" value={preferences.frequency} onChange={handlePreferenceChange} className="w-full p-3 border rounded-lg text-center font-semibold bg-gray-50">
+                                    <option>Weekly</option>
+                                    <option>Bi-Weekly</option>
+                                    <option>Monthly</option>
+                                    <option>One-Time Only</option>
+                                </select>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-indigo-100 relative overflow-hidden">
+                                <p className="text-gray-600 mb-2">Your Total</p>
+                                <p className={`text-4xl font-bold mb-6 ${genieDiscount ? 'text-gray-400 line-through text-2xl' : 'text-gray-800'}`}>${cartTotal.toFixed(2)}</p>
+                                
+                                {genieDiscount && (
+                                    <div className="animate-bounce">
+                                        <p className="text-5xl font-bold text-green-600 mb-2">${finalPrice.toFixed(2)}</p>
+                                        <div className="flex items-center justify-center gap-2 text-green-700 bg-green-100 py-1 px-3 rounded-full inline-block mx-auto mb-4">
+                                            <CheckBadgeIcon className="w-5 h-5"/> Genie Deal Applied: 10% OFF
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!genieDiscount ? (
+                                    <button 
+                                        onClick={handleAskGenie}
+                                        className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-4 rounded-lg font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <SparklesIcon className="w-6 h-6"/> Ask Genie for a Deal
+                                    </button>
+                                ) : (
+                                    <p className="text-gray-500 italic">Genie has granted your wish!</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="bg-gray-50 p-4 border-t flex justify-between">
+                    {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-2 text-gray-600 hover:bg-gray-200 rounded-lg font-semibold">Back</button>}
+                    <button 
+                        onClick={handleNext} 
+                        className={`px-8 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 shadow-md ml-auto ${step === 2 && Object.keys(selectedItems).length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        disabled={step === 2 && Object.keys(selectedItems).length === 0}
+                    >
+                        {step === 4 ? 'Proceed to Checkout' : 'Next'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Simple hashing function to determine availability based on strings
 const getRegionalProductData = (product: Product, postalCode: string) => {
     // Sanitize
@@ -930,10 +1367,13 @@ const getRegionalProductData = (product: Product, postalCode: string) => {
     // Hash based on chars
     let hash = 0;
     for (let i = 0; i < postalPrefix.length; i++) {
-        hash = ((hash << 5) - hash) + postalPrefix.charCodeAt(i);
+        // Fix: Explicit cast to number for arithmetic operation
+        const charCode: number = postalPrefix.charCodeAt(i);
+        hash = ((hash << 5) - hash) + charCode;
         hash |= 0;
     }
-    const productHash = product.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    // Fix: Explicitly type accumulator in reduce
+    const productHash = product.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
     const combinedHash = Math.abs(hash + productHash);
 
     // 10% chance item is unavailable in this region
@@ -941,6 +1381,7 @@ const getRegionalProductData = (product: Product, postalCode: string) => {
     
     // Price variance +/- 10% based on region
     const priceVariance = ((combinedHash % 20) - 10) / 100;
+    // Fix: Ensure price is number before arithmetic
     const regionalPrice = product.price * (1 + priceVariance);
 
     return {
@@ -968,6 +1409,10 @@ const UserView: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     
     const [profileInitialTab, setProfileInitialTab] = useState<'dashboard' | 'orders' | 'subscriptions' | 'regulars' | 'preferences' | 'manage'>('dashboard');
+    
+    // State for Custom Box Builder flow
+    const [showBoxBuilder, setShowBoxBuilder] = useState(false);
+    const [pendingBoxBuilder, setPendingBoxBuilder] = useState(false);
 
     const cart = useCart();
     
@@ -1024,7 +1469,10 @@ const UserView: React.FC = () => {
 
     const handleAddRecipeItemsToCart = (items: { product: Product; quantity: number }[]) => {
         items.forEach(item => {
-            cart.addToCart(item.product);
+            // Add items, repeating for quantity (simple implementation for useCart hook that expects single item add)
+            for(let i=0; i<item.quantity; i++) {
+                cart.addToCart(item.product);
+            }
         });
     };
     
@@ -1042,8 +1490,12 @@ const UserView: React.FC = () => {
     const handleAuthSuccess = (user: User) => {
         setIsAuthenticated(true);
         setCurrentUser(user);
-        // If cart is not empty, go to checkout, else go to shop
-        if (cart.items.length > 0) {
+        
+        if (pendingBoxBuilder) {
+            setPendingBoxBuilder(false);
+            setShowBoxBuilder(true);
+            setCurrentView('SHOP');
+        } else if (cart.items.length > 0) {
             setCurrentView('CHECKOUT');
         } else {
             setCurrentView('SHOP');
@@ -1102,33 +1554,95 @@ const UserView: React.FC = () => {
         setProfileInitialTab('subscriptions');
         setCurrentView('PROFILE');
     };
+    
+    const handleStartCustomBox = () => {
+        if (isAuthenticated) {
+            setShowBoxBuilder(true);
+        } else {
+            setPendingBoxBuilder(true);
+            setCurrentView('AUTH');
+        }
+    };
+    
+    const handleCompleteCustomBox = (items: { product: Product, quantity: number }[]) => {
+        items.forEach(({ product, quantity }) => {
+            // Add items one by one or create logic for bulk add in useCart
+            for(let i=0; i<quantity; i++) {
+                cart.addToCart(product); 
+            }
+        });
+        setShowBoxBuilder(false);
+        setCurrentView('CHECKOUT');
+    };
 
     const renderContent = () => {
         switch (currentView) {
             case 'SHOP':
                 return (
-                     <div className="container mx-auto px-6 py-8">
-                        {/* Only show welcome banner/suggestions if logged in and on shop page, otherwise standard shop */}
-                         {!isAuthenticated && (
-                             <div className="mb-8 p-8 bg-green-50 rounded-lg text-center border border-green-100">
-                                 <h2 className="text-3xl font-bold text-gray-800 mb-2">Fresh From Our Local Farms</h2>
-                                 <p className="text-gray-600">Join Farm2Flat today for personalized recipes and exclusive local produce!</p>
-                                 <button onClick={() => setCurrentView('AUTH')} className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700">Sign Up / Sign In</button>
-                             </div>
-                         )}
+                     <div className="pb-0"> {/* Removed container constraint for full width sections */}
+                        <div className="container mx-auto px-6 py-8">
+                            {/* Hero Section with Signup - Replaces simple banner for unauthenticated users */}
+                             {!isAuthenticated && (
+                                 <div className="relative w-full h-[400px] mb-16 rounded-2xl overflow-hidden shadow-2xl group">
+                                     {/* Background Image - Fresh food table */}
+                                     <img 
+                                         src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=2070&auto=format&fit=crop" 
+                                         alt="Fresh food on table" 
+                                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                     />
+                                     {/* Gradient Overlay to make text pop */}
+                                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent"></div>
+                                     
+                                     <div className="relative h-full flex flex-col justify-center px-8 md:px-16 max-w-2xl">
+                                         <h2 className="text-5xl md:text-6xl font-extrabold text-white mb-4 tracking-tight leading-none">
+                                             Fresh <br/>
+                                             from local <br/>
+                                             farms
+                                         </h2>
+                                         <p className="text-xl text-gray-200 mb-8 max-w-md">
+                                             Direct from the soil to your table. Experience the difference of true local produce at wholesale prices.
+                                         </p>
+                                         <div className="flex flex-wrap gap-4">
+                                             <button onClick={() => setCurrentView('AUTH')} className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-green-500/50 transform hover:-translate-y-1">
+                                                 Get Started
+                                             </button>
+                                             <button onClick={() => document.getElementById('catalog')?.scrollIntoView({behavior: 'smooth'})} className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-2 border-white/50 px-8 py-3 rounded-full font-bold transition-all transform hover:-translate-y-1">
+                                                 View Catalog
+                                             </button>
+                                         </div>
+                                     </div>
+                                 </div>
+                             )}
 
-                         {isAuthenticated && currentUser && (
-                            <PersonalizedSuggestions 
-                                user={currentUser}
-                                onGetSuggestions={handleGetSuggestions}
-                                suggestions={suggestions}
-                                isLoading={isLoadingSuggestions}
+                             {/* Featured Products List */}
+                             <FeaturedProducts 
+                                products={regionalProducts} 
+                                cartItems={cart.items}
                                 onAddToCart={cart.addToCart}
-                                availableProducts={regionalProducts}
-                            />
-                        )}
+                                onUpdateQuantity={cart.updateQuantity}
+                                onRemoveFromCart={cart.removeFromCart}
+                                onToggleRegular={handleToggleRegular}
+                                regulars={currentUser?.regularPurchaseList || []}
+                             />
+                        </div>
 
-                        <div className="">
+                        {/* Promo Section - Full Width capability container if needed, but keeping margin for design */}
+                        <div className="container mx-auto px-0 md:px-6">
+                            <PromoSection onStartCustomBox={handleStartCustomBox} onNavigate={handleNavigate} />
+                        </div>
+
+                        <div className="container mx-auto px-6 py-8" id="catalog">
+                             {isAuthenticated && currentUser && (
+                                <PersonalizedSuggestions 
+                                    user={currentUser}
+                                    onGetSuggestions={handleGetSuggestions}
+                                    suggestions={suggestions}
+                                    isLoading={isLoadingSuggestions}
+                                    onAddToCart={cart.addToCart}
+                                    availableProducts={regionalProducts}
+                                />
+                            )}
+
                             <h2 className="text-3xl font-bold text-gray-800 mb-6">Fresh from the Farm Catalog</h2>
                             
                             <div className="flex flex-col lg:flex-row gap-8">
@@ -1157,12 +1671,15 @@ const UserView: React.FC = () => {
                                          <p className="text-sm text-gray-500">Showing {filteredProducts.length} items for region: <span className="font-bold text-green-700">{postalCode || 'Default'}</span></p>
                                     </div>
                                    
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                         {filteredProducts.map(p => (
                                             <ProductCard 
                                                 key={p.id} 
                                                 product={p} 
+                                                cartItem={cart.items.find(i => i.id === p.id && i.type === 'product')}
                                                 onAddToCart={cart.addToCart}
+                                                onUpdateQuantity={cart.updateQuantity}
+                                                onRemoveFromCart={cart.removeFromCart}
                                                 isRegular={currentUser?.regularPurchaseList?.includes(p.id) || false}
                                                 onToggleRegular={handleToggleRegular}
                                                 available={p.available}
@@ -1177,6 +1694,9 @@ const UserView: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Mission Statement Section Above Footer */}
+                        <MissionSection />
                     </div>
                 );
             case 'SUBSCRIPTIONS':
@@ -1230,10 +1750,10 @@ const UserView: React.FC = () => {
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen">
+        <div className="bg-gray-50 min-h-screen flex flex-col">
             <Header onNavigate={handleNavigate} cartItemCount={cart.totalItems} postalCode={postalCode} onPostalCodeChange={setPostalCode} isAuthenticated={isAuthenticated} onSignOut={handleSignOut} />
             <CountdownTimer deadlineDate={deadlineDate} onDeadlineChange={handleDeadlineChange} selectedDeadline={selectedDeadline} />
-            <main>
+            <main className="flex-grow">
                 {renderContent()}
             </main>
              {selectedRecipe && (
@@ -1244,9 +1764,14 @@ const UserView: React.FC = () => {
                     onAddToCart={handleAddRecipeItemsToCart}
                 />
             )}
-            <footer className="bg-gray-200 text-center p-4 mt-8">
-                <p>&copy; 2024 Farm2Flat. All rights reserved.</p>
-            </footer>
+            {showBoxBuilder && (
+                <CustomBoxBuilderModal 
+                    onClose={() => setShowBoxBuilder(false)} 
+                    products={regionalProducts}
+                    onComplete={handleCompleteCustomBox}
+                />
+            )}
+            <Footer />
         </div>
     );
 };

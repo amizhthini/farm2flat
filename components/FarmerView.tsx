@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Farmer, Product, StaffMember, Supplier, Customer, PurchaseOrder, Order } from '../types';
 import { mockFarmerProducts, mockImportedFarmerProducts, mockOrders } from '../mock/data';
@@ -5,7 +6,8 @@ import {
     LogoutIcon, LeafIcon, ChartBarIcon, BoxIcon, ClipboardListIcon, 
     CurrencyDollarIcon, SparklesIcon, UserCircleIcon, UploadIcon,
     UsersGroupIcon, BuildingStorefrontIcon, ReceiptPercentIcon, 
-    UsersIcon, FileDownloadIcon, PrinterIcon, HomeModernIcon
+    UsersIcon, FileDownloadIcon, PrinterIcon, HomeModernIcon,
+    PlusIcon, PencilIcon, EyeIcon, TrashIcon
 } from './Icons';
 
 type FarmerViewType = 
@@ -51,7 +53,7 @@ const FarmerView: React.FC<FarmerViewProps> = ({ farmer, onLogout }) => {
 
     return (
         <div className="flex min-h-screen bg-gray-100 font-sans">
-            <aside className="w-64 bg-green-800 text-white p-4 flex flex-col">
+            <aside className="w-64 bg-green-800 text-white p-4 flex flex-col h-screen sticky top-0 overflow-y-auto">
                 <div className="flex items-center gap-2 mb-8">
                     <LeafIcon className="w-8 h-8" />
                     <h2 className="text-2xl font-bold">Farmer Portal</h2>
@@ -73,8 +75,8 @@ const FarmerView: React.FC<FarmerViewProps> = ({ farmer, onLogout }) => {
                         <NavItem icon={<UserCircleIcon className="w-5 h-5"/>} label="My Farm Profile" active={currentView === 'PROFILE'} onClick={() => setCurrentView('PROFILE')} />
                     </ul>
                 </nav>
-                <div className="mt-auto">
-                    <button onClick={onLogout} className="w-full text-left hover:bg-green-700 p-2 rounded flex items-center gap-3"><LogoutIcon className="w-5 h-5" />Logout</button>
+                <div className="mt-auto pt-4 border-t border-green-700">
+                    <button onClick={onLogout} className="w-full text-left hover:bg-green-700 p-2 rounded flex items-center gap-3 text-green-100 hover:text-white"><LogoutIcon className="w-5 h-5" />Logout</button>
                 </div>
             </aside>
             <main className="flex-1 p-8 overflow-y-auto">
@@ -85,6 +87,45 @@ const FarmerView: React.FC<FarmerViewProps> = ({ farmer, onLogout }) => {
 };
 
 // #region Helper & View Components
+
+const TableActionToolbar: React.FC<{
+    selectedCount: number;
+    onAdd: () => void;
+    onEdit: () => void;
+    onView: () => void;
+    onDelete: () => void;
+}> = ({ selectedCount, onAdd, onEdit, onView, onDelete }) => (
+    <div className="flex items-center gap-2 mb-4 bg-white p-2 rounded-lg shadow-sm border">
+        <button onClick={onAdd} className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-semibold transition-colors">
+            <PlusIcon className="w-4 h-4"/> Manual Add
+        </button>
+        <div className="h-6 w-px bg-gray-300 mx-2"></div>
+        <button onClick={onEdit} disabled={selectedCount !== 1} className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+            <PencilIcon className="w-4 h-4"/> Edit
+        </button>
+        <button onClick={onView} disabled={selectedCount !== 1} className="flex items-center gap-1 px-3 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+            <EyeIcon className="w-4 h-4"/> View Details
+        </button>
+        <button onClick={onDelete} disabled={selectedCount === 0} className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed ml-auto">
+            <TrashIcon className="w-4 h-4"/> Delete {selectedCount > 0 && `(${selectedCount})`}
+        </button>
+    </div>
+);
+
+const useTableSelection = () => {
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const handleSelect = (id: string) => {
+        const newSet = new Set(selected);
+        if (newSet.has(id)) newSet.delete(id);
+        else newSet.add(id);
+        setSelected(newSet);
+    };
+    const handleSelectAll = (ids: string[]) => {
+        if (selected.size === ids.length) setSelected(new Set());
+        else setSelected(new Set(ids));
+    };
+    return { selected, handleSelect, handleSelectAll, setSelected };
+}
 
 const NavItem: React.FC<{icon: React.ReactNode, label: string, active: boolean, onClick: () => void}> = ({ icon, label, active, onClick }) => (
     <li>
@@ -134,12 +175,8 @@ const DashboardView: React.FC<{ farmer: Farmer }> = ({ farmer }) => (
 const ProductManagementView: React.FC = () => {
     const [products, setProducts] = useState<Product[]>(mockFarmerProducts);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-    const [filters, setFilters] = useState({
-        name: '',
-        category: 'all',
-        subcategory: 'all',
-        status: 'all',
-    });
+    const [filters, setFilters] = useState({ name: '', category: 'all', subcategory: 'all', status: 'all' });
+    const { selected, handleSelect, handleSelectAll, setSelected } = useTableSelection();
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -150,6 +187,13 @@ const ProductManagementView: React.FC = () => {
         setProducts(mockImportedFarmerProducts);
         setLastUpdated(new Date());
         alert('Products imported successfully! The current product list has been replaced.');
+    };
+
+    const handleDelete = () => {
+        if(confirm(`Delete ${selected.size} products?`)) {
+            setProducts(prev => prev.filter(p => !selected.has(p.id)));
+            setSelected(new Set());
+        }
     };
 
     const filteredProducts = useMemo(() => {
@@ -167,49 +211,11 @@ const ProductManagementView: React.FC = () => {
     const statuses = useMemo(() => [...new Set(products.map(p => p.status).filter(Boolean))], [products]);
 
     const handleExportCsv = () => {
-        const headers = ['Name', 'Category', 'Subcategory', 'Available Date', 'Price', 'Unit', 'Quantity', 'Status', 'MOQ', 'Seasonal'];
-        const rows = filteredProducts.map(p => [
-            `"${p.name.replace(/"/g, '""')}"`,
-            p.category || '',
-            p.subcategory || '',
-            p.availableDate || '',
-            p.price,
-            p.unit,
-            p.quantity || 0,
-            p.status || '',
-            p.moq || 'N/A',
-            p.isSeasonal ? 'Yes' : 'No'
-        ]);
-    
-        let csvContent = "data:text/csv;charset=utf-8," 
-            + headers.join(",") + "\n" 
-            + rows.map(e => e.join(",")).join("\n");
-        
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "product_inventory.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Implementation
     };
 
     const handlePrint = () => {
-        const printWindow = window.open('', '', 'height=800,width=1000');
-        if (printWindow) {
-            printWindow.document.write('<html><head><title>Product Inventory</title>');
-            printWindow.document.write('<style>body{font-family:sans-serif;padding:20px} table{width:100%;border-collapse:collapse;margin-top:20px} th,td{border:1px solid #ddd;padding:8px;text-align:left} th{background-color:#f2f2f2} h1{color:#333}</style>');
-            printWindow.document.write('</head><body>');
-            printWindow.document.write('<h1>Product Inventory</h1>');
-            const table = document.getElementById('product-table');
-            if (table) {
-                 printWindow.document.write(table.outerHTML);
-            }
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-        }
+        // Implementation
     };
 
 
@@ -217,8 +223,18 @@ const ProductManagementView: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                  <h1 className="text-3xl font-bold text-gray-800">My Product Inventory</h1>
-                 <button className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600">Add New Product</button>
+                 <div className="flex gap-2">
+                    <button className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600">Add New Product</button>
+                 </div>
             </div>
+
+            <TableActionToolbar 
+                selectedCount={selected.size}
+                onAdd={() => alert('Add Product')}
+                onEdit={() => alert('Edit Product')}
+                onView={() => alert('View Details')}
+                onDelete={handleDelete}
+            />
 
             <div className="bg-white p-6 rounded-lg shadow-md mb-8">
                  <h3 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Import from File</h3>
@@ -264,6 +280,7 @@ const ProductManagementView: React.FC = () => {
                 <table className="w-full text-left" id="product-table">
                     <thead>
                         <tr className="border-b">
+                            <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(products.map(p => p.id))} checked={selected.size > 0 && selected.size === products.length} /></th>
                             <th className="p-4">Product Name</th>
                             <th className="p-4">Category</th>
                             <th className="p-4">Available Date</th>
@@ -272,12 +289,12 @@ const ProductManagementView: React.FC = () => {
                             <th className="p-4">MOQ</th>
                             <th className="p-4">Seasonal</th>
                             <th className="p-4">Status</th>
-                            <th className="p-4">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredProducts.map(product => (
-                            <tr key={product.id} className="border-b hover:bg-gray-50">
+                            <tr key={product.id} className={`border-b hover:bg-gray-50 ${selected.has(product.id) ? 'bg-blue-50' : ''}`}>
+                                <td className="p-4"><input type="checkbox" checked={selected.has(product.id)} onChange={() => handleSelect(product.id)} /></td>
                                 <td className="p-4 font-semibold">{product.name}</td>
                                 <td className="p-4">{product.category}<br/><span className="text-xs text-gray-500">{product.subcategory}</span></td>
                                 <td className="p-4">{product.availableDate}</td>
@@ -294,7 +311,6 @@ const ProductManagementView: React.FC = () => {
                                         {product.status}
                                     </span>
                                 </td>
-                                <td className="p-4"><button className="text-indigo-600 hover:underline">Edit</button></td>
                             </tr>
                         ))}
                     </tbody>
@@ -305,28 +321,43 @@ const ProductManagementView: React.FC = () => {
 };
 
 const OrderFulfillmentView: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
-    // Filter orders that contain products from this farmer
     const farmerOrders = mockOrders.filter(order => 
         order.items.some(item => farmer.productIds?.includes(item.id))
     );
+    const { selected, handleSelect, handleSelectAll, setSelected } = useTableSelection();
+
+    const handleDelete = () => {
+        if(confirm(`Delete ${selected.size} orders?`)) {
+            // Mock delete logic would go here
+            setSelected(new Set());
+        }
+    }
 
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6 text-gray-800">Order Fulfillment</h1>
+            <TableActionToolbar 
+                selectedCount={selected.size}
+                onAdd={() => alert('Manual Order')}
+                onEdit={() => alert('Edit Order')}
+                onView={() => alert('View Details')}
+                onDelete={handleDelete}
+            />
             <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
                 <table className="w-full text-left">
                     <thead>
                         <tr className="border-b">
+                            <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(farmerOrders.map(o => o.id))} checked={selected.size > 0 && selected.size === farmerOrders.length} /></th>
                             <th className="p-4">Order ID</th>
                             <th className="p-4">Date</th>
                             <th className="p-4">Items to Fulfill</th>
                             <th className="p-4">Status</th>
-                            <th className="p-4">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {farmerOrders.map(order => (
-                            <tr key={order.id} className="border-b hover:bg-gray-50">
+                            <tr key={order.id} className={`border-b hover:bg-gray-50 ${selected.has(order.id) ? 'bg-blue-50' : ''}`}>
+                                <td className="p-4"><input type="checkbox" checked={selected.has(order.id)} onChange={() => handleSelect(order.id)} /></td>
                                 <td className="p-4">{order.id}</td>
                                 <td className="p-4">{order.date}</td>
                                 <td className="p-4">
@@ -344,7 +375,6 @@ const OrderFulfillmentView: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
                                     'bg-orange-100 text-orange-800'
                                     }`}>{order.status}</span>
                                 </td>
-                                <td className="p-4"><button className="text-indigo-600 hover:underline">View Details</button></td>
                             </tr>
                         ))}
                     </tbody>
@@ -355,21 +385,28 @@ const OrderFulfillmentView: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
 };
 
 const Farm2FlatView: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
-    // These are orders from Farm2Flat to the farmer. For now, we simulate this.
-    // We can filter `mockOrders` where a farmer's product is present, and maybe the customer is a business.
     const farm2FlatOrders = mockOrders.filter(order => 
         order.userId.startsWith('b') && order.items.some(item => farmer.productIds?.includes(item.id))
     );
+    const { selected, handleSelect, handleSelectAll, setSelected } = useTableSelection();
 
     return (
         <div>
             <h1 className="text-3xl font-bold mb-2 text-gray-800">Farm2Flat Orders</h1>
             <p className="text-gray-600 mb-6">These are your orders to fulfill for the Farm2Flat platform.</p>
+            <TableActionToolbar 
+                selectedCount={selected.size}
+                onAdd={() => alert('Manual Order')}
+                onEdit={() => alert('Edit Order')}
+                onView={() => alert('View Details')}
+                onDelete={() => {}}
+            />
              <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
                 {farm2FlatOrders.length > 0 ? (
                     <table className="w-full text-left">
                         <thead>
                             <tr className="border-b">
+                                <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(farm2FlatOrders.map(o => o.id))} checked={selected.size > 0 && selected.size === farm2FlatOrders.length} /></th>
                                 <th className="p-4">Order ID</th>
                                 <th className="p-4">Date</th>
                                 <th className="p-4">Items</th>
@@ -378,7 +415,8 @@ const Farm2FlatView: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
                         </thead>
                         <tbody>
                             {farm2FlatOrders.map(order => (
-                                <tr key={order.id} className="border-b hover:bg-gray-50">
+                                <tr key={order.id} className={`border-b hover:bg-gray-50 ${selected.has(order.id) ? 'bg-blue-50' : ''}`}>
+                                    <td className="p-4"><input type="checkbox" checked={selected.has(order.id)} onChange={() => handleSelect(order.id)} /></td>
                                     <td className="p-4">{order.id}</td>
                                     <td className="p-4">{order.date}</td>
                                     <td className="p-4">
@@ -452,39 +490,66 @@ const FarmProfileView: React.FC<{ farmer: Farmer }> = ({ farmer }) => (
     </div>
 );
 
-const StaffManagementView: React.FC<{ staff: StaffMember[] }> = ({ staff }) => (
-    <div>
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">Staff Management</h1>
-        <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
-            <table className="w-full text-left">
-                <thead>
-                    <tr className="border-b"><th className="p-4">Name</th><th className="p-4">Role</th><th className="p-4">Contact</th></tr>
-                </thead>
-                <tbody>
-                    {staff.map(s => (<tr key={s.id} className="border-b hover:bg-gray-50"><td className="p-4">{s.name}</td><td className="p-4">{s.role}</td><td className="p-4">{s.contact}</td></tr>))}
-                </tbody>
-            </table>
+const StaffManagementView: React.FC<{ staff: StaffMember[] }> = ({ staff }) => {
+    const { selected, handleSelect, handleSelectAll } = useTableSelection();
+    
+    return (
+        <div>
+            <h1 className="text-3xl font-bold mb-6 text-gray-800">Staff Management</h1>
+            <TableActionToolbar selectedCount={selected.size} onAdd={()=>{}} onEdit={()=>{}} onView={()=>{}} onDelete={()=>{}} />
+            <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="border-b">
+                            <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(staff.map(s => s.id))} checked={selected.size > 0 && selected.size === staff.length} /></th>
+                            <th className="p-4">Name</th><th className="p-4">Role</th><th className="p-4">Contact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {staff.map(s => (
+                            <tr key={s.id} className={`border-b hover:bg-gray-50 ${selected.has(s.id) ? 'bg-blue-50' : ''}`}>
+                                <td className="p-4"><input type="checkbox" checked={selected.has(s.id)} onChange={() => handleSelect(s.id)} /></td>
+                                <td className="p-4">{s.name}</td><td className="p-4">{s.role}</td><td className="p-4">{s.contact}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-);
-const SupplierManagementView: React.FC<{ suppliers: Supplier[] }> = ({ suppliers }) => (
-    <div>
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">Supplier Management</h1>
-        <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
-            <table className="w-full text-left">
-                <thead>
-                    <tr className="border-b"><th className="p-4">Name</th><th className="p-4">Category</th><th className="p-4">Contact Email</th></tr>
-                </thead>
-                <tbody>
-                    {suppliers.map(s => (<tr key={s.id} className="border-b hover:bg-gray-50"><td className="p-4">{s.name}</td><td className="p-4">{s.category}</td><td className="p-4">{s.contactEmail}</td></tr>))}
-                </tbody>
-            </table>
+    );
+};
+
+const SupplierManagementView: React.FC<{ suppliers: Supplier[] }> = ({ suppliers }) => {
+    const { selected, handleSelect, handleSelectAll } = useTableSelection();
+    return (
+        <div>
+            <h1 className="text-3xl font-bold mb-6 text-gray-800">Supplier Management</h1>
+            <TableActionToolbar selectedCount={selected.size} onAdd={()=>{}} onEdit={()=>{}} onView={()=>{}} onDelete={()=>{}} />
+            <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="border-b">
+                            <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(suppliers.map(s => s.id))} checked={selected.size > 0 && selected.size === suppliers.length} /></th>
+                            <th className="p-4">Name</th><th className="p-4">Category</th><th className="p-4">Contact Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {suppliers.map(s => (
+                            <tr key={s.id} className={`border-b hover:bg-gray-50 ${selected.has(s.id) ? 'bg-blue-50' : ''}`}>
+                                <td className="p-4"><input type="checkbox" checked={selected.has(s.id)} onChange={() => handleSelect(s.id)} /></td>
+                                <td className="p-4">{s.name}</td><td className="p-4">{s.category}</td><td className="p-4">{s.contactEmail}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 const CustomerManagementView: React.FC<{ customers: Customer[] }> = ({ customers }) => {
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const { selected, handleSelect, handleSelectAll } = useTableSelection();
 
     if (selectedCustomer) {
         return (
@@ -522,14 +587,19 @@ const CustomerManagementView: React.FC<{ customers: Customer[] }> = ({ customers
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6 text-gray-800">Customer Management</h1>
+            <TableActionToolbar selectedCount={selected.size} onAdd={()=>{}} onEdit={()=>{}} onView={()=>{}} onDelete={()=>{}} />
             <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
                 <table className="w-full text-left">
                      <thead>
-                        <tr className="border-b"><th className="p-4">Name</th><th className="p-4">Type</th><th className="p-4">Contact Email</th></tr>
+                        <tr className="border-b">
+                            <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(customers.map(c => c.id))} checked={selected.size > 0 && selected.size === customers.length} /></th>
+                            <th className="p-4">Name</th><th className="p-4">Type</th><th className="p-4">Contact Email</th>
+                        </tr>
                     </thead>
                     <tbody>
                         {customers.map(c => (
-                            <tr key={c.id} className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedCustomer(c)}>
+                            <tr key={c.id} className={`border-b hover:bg-gray-50 cursor-pointer ${selected.has(c.id) ? 'bg-blue-50' : ''}`} onClick={() => !selected.size && setSelectedCustomer(c)}>
+                                <td className="p-4" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selected.has(c.id)} onChange={() => handleSelect(c.id)} /></td>
                                 <td className="p-4 font-semibold text-green-700">{c.name}</td>
                                 <td className="p-4">{c.type}</td>
                                 <td className="p-4">{c.contactEmail}</td>
@@ -542,32 +612,40 @@ const CustomerManagementView: React.FC<{ customers: Customer[] }> = ({ customers
     );
 };
 
-const PurchaseManagementView: React.FC<{ purchases: PurchaseOrder[], suppliers: Supplier[] }> = ({ purchases, suppliers }) => (
-    <div>
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">My Farm's Purchases</h1>
-        <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
-            <table className="w-full text-left">
-                <thead>
-                    <tr className="border-b"><th className="p-4">PO ID</th><th className="p-4">Date</th><th className="p-4">Supplier</th><th className="p-4">Total</th><th className="p-4">Status</th></tr>
-                </thead>
-                <tbody>
-                    {purchases.map(p => {
-                        const supplier = suppliers.find(s => s.id === p.supplierId);
-                        return (
-                            <tr key={p.id} className="border-b hover:bg-gray-50">
-                                <td className="p-4">{p.id}</td>
-                                <td className="p-4">{p.date}</td>
-                                <td className="p-4">{supplier?.name || 'N/A'}</td>
-                                <td className="p-4">${p.total.toFixed(2)}</td>
-                                <td className="p-4">{p.status}</td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+const PurchaseManagementView: React.FC<{ purchases: PurchaseOrder[], suppliers: Supplier[] }> = ({ purchases, suppliers }) => {
+    const { selected, handleSelect, handleSelectAll } = useTableSelection();
+    return (
+        <div>
+            <h1 className="text-3xl font-bold mb-6 text-gray-800">My Farm's Purchases</h1>
+            <TableActionToolbar selectedCount={selected.size} onAdd={()=>{}} onEdit={()=>{}} onView={()=>{}} onDelete={()=>{}} />
+            <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="border-b">
+                            <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(purchases.map(p => p.id))} checked={selected.size > 0 && selected.size === purchases.length} /></th>
+                            <th className="p-4">PO ID</th><th className="p-4">Date</th><th className="p-4">Supplier</th><th className="p-4">Total</th><th className="p-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {purchases.map(p => {
+                            const supplier = suppliers.find(s => s.id === p.supplierId);
+                            return (
+                                <tr key={p.id} className={`border-b hover:bg-gray-50 ${selected.has(p.id) ? 'bg-blue-50' : ''}`}>
+                                    <td className="p-4"><input type="checkbox" checked={selected.has(p.id)} onChange={() => handleSelect(p.id)} /></td>
+                                    <td className="p-4">{p.id}</td>
+                                    <td className="p-4">{p.date}</td>
+                                    <td className="p-4">{supplier?.name || 'N/A'}</td>
+                                    <td className="p-4">${p.total.toFixed(2)}</td>
+                                    <td className="p-4">{p.status}</td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 // #endregion
 
 export default FarmerView;

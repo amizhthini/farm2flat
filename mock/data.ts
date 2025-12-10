@@ -690,7 +690,7 @@ export const mockSourcedProducts: SourcedProduct[] = mockProducts.map(p => ({
     unit: p.unit,
     imageUrl: p.imageUrl,
     category: p.category || 'Vegetable',
-    publishStatus: 'published',
+    publishStatus: 'unpublished',
     sellingPrice: p.price,
     publishTarget: ['retail', 'wholesale'],
     availableQuantity: p.quantity

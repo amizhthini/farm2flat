@@ -7,7 +7,7 @@ import {
     ExclamationTriangleIcon, LogoutIcon, SparklesIcon, BuildingOffice2Icon,
     CubeTransparentIcon, CheckBadgeIcon, ArchiveBoxIcon, CreditCardIcon, DocumentTextIcon, BuildingStorefrontIcon,
     ShoppingBagIcon, UserIcon, ArrowPathRoundedSquareIcon, RocketLaunchIcon, ClipboardListIcon,
-    UploadIcon
+    UploadIcon, PlusIcon, PencilIcon, EyeIcon, TrashIcon
 } from './Icons';
 
 type AdminViewType = 
@@ -56,10 +56,13 @@ const AdminView: React.FC<AdminViewProps> = ({ onLogout }) => {
       case 'SUPPLIERS': return <SupplierManagementView />;
       case 'SUPPLIES_CURATION': return <SuppliesCurationView products={sourcedProducts} setSourcedProducts={setSourcedProducts} onPushToPublish={handlePushToPublish} />;
       case 'PRODUCT_PUBLISHING':
-        const allUnpublished = sourcedProducts.filter(p => p.publishStatus === 'unpublished');
-        const productsToPublish = publishingFilter
-          ? allUnpublished.filter(p => publishingFilter.includes(p.id))
-          : allUnpublished;
+        let productsToPublish: SourcedProduct[];
+        if (publishingFilter) {
+            productsToPublish = sourcedProducts.filter(p => publishingFilter.includes(p.id));
+        } else {
+            productsToPublish = sourcedProducts.filter(p => p.publishStatus === 'unpublished');
+        }
+
         return (
           <ProductPublishingView
             products={productsToPublish}
@@ -93,61 +96,65 @@ const AdminView: React.FC<AdminViewProps> = ({ onLogout }) => {
 
   return (
     <div className="flex min-h-screen bg-gray-100 font-sans">
-      <aside className="w-64 bg-gray-800 text-white p-4 flex flex-col">
+      <aside className="w-64 bg-gray-800 text-white p-4 flex flex-col h-screen sticky top-0 overflow-y-auto custom-scrollbar">
         <h2 className="text-2xl font-bold mb-6">Farm2Flat Admin</h2>
         
-        <p className="text-xs text-gray-400 uppercase tracking-wider px-2 mb-2">Sourcing & Publishing</p>
-        <nav>
-            <ul className="space-y-1">
-                <NavItem icon={<BuildingOffice2Icon className="w-5 h-5"/>} label="Supplier Management" active={currentView === 'SUPPLIERS'} onClick={() => setCurrentView('SUPPLIERS')} />
-                <NavItem icon={<ShoppingBagIcon className="w-5 h-5"/>} label="Supplies & Curation" active={currentView === 'SUPPLIES_CURATION'} onClick={() => setCurrentView('SUPPLIES_CURATION')} />
-                <NavItem icon={<RocketLaunchIcon className="w-5 h-5"/>} label="Product Publishing" active={currentView === 'PRODUCT_PUBLISHING'} onClick={() => { setPublishingFilter(null); setCurrentView('PRODUCT_PUBLISHING'); }} />
-                <NavItem icon={<CheckBadgeIcon className="w-5 h-5"/>} label="Published (Retail)" active={currentView === 'PUBLISHED_RETAIL'} onClick={() => setCurrentView('PUBLISHED_RETAIL')} />
-                <NavItem icon={<BuildingStorefrontIcon className="w-5 h-5"/>} label="Published (Wholesale)" active={currentView === 'PUBLISHED_WHOLESALE'} onClick={() => setCurrentView('PUBLISHED_WHOLESALE')} />
-            </ul>
-        </nav>
+        <div className="space-y-6 flex-grow">
+            <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wider px-2 mb-2">Sourcing & Publishing</p>
+                <nav>
+                    <ul className="space-y-1">
+                        <NavItem icon={<BuildingOffice2Icon className="w-5 h-5"/>} label="Supplier Management" active={currentView === 'SUPPLIERS'} onClick={() => setCurrentView('SUPPLIERS')} />
+                        <NavItem icon={<ShoppingBagIcon className="w-5 h-5"/>} label="Supplies & Curation" active={currentView === 'SUPPLIES_CURATION'} onClick={() => setCurrentView('SUPPLIES_CURATION')} />
+                        <NavItem icon={<RocketLaunchIcon className="w-5 h-5"/>} label="Product Publishing" active={currentView === 'PRODUCT_PUBLISHING'} onClick={() => { setPublishingFilter(null); setCurrentView('PRODUCT_PUBLISHING'); }} />
+                        <NavItem icon={<CheckBadgeIcon className="w-5 h-5"/>} label="Published (Retail)" active={currentView === 'PUBLISHED_RETAIL'} onClick={() => setCurrentView('PUBLISHED_RETAIL')} />
+                        <NavItem icon={<BuildingStorefrontIcon className="w-5 h-5"/>} label="Published (Wholesale)" active={currentView === 'PUBLISHED_WHOLESALE'} onClick={() => setCurrentView('PUBLISHED_WHOLESALE')} />
+                    </ul>
+                </nav>
+            </div>
 
-        <hr className="border-gray-700 my-4" />
+            <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wider px-2 mb-2">Sales & Fulfillment</p>
+                <nav>
+                <ul className="space-y-1">
+                    <NavItem icon={<ClipboardListIcon className="w-5 h-5"/>} label="Retail Orders" active={currentView === 'RETAIL_ORDERS'} onClick={() => setCurrentView('RETAIL_ORDERS')} />
+                    <NavItem icon={<ArchiveBoxIcon className="w-5 h-5"/>} label="Subscription Boxes" active={currentView === 'SUBSCRIPTIONS'} onClick={() => setCurrentView('SUBSCRIPTIONS')} />
+                    <NavItem icon={<TruckIcon className="w-5 h-5"/>} label="Hub & Logistics" active={currentView === 'LOGISTICS'} onClick={() => setCurrentView('LOGISTICS')} />
+                    <NavItem icon={<ExclamationTriangleIcon className="w-5 h-5"/>} label="Dispute Mgmt" active={currentView === 'DISPUTES'} onClick={() => setCurrentView('DISPUTES')} />
+                </ul>
+                </nav>
+            </div>
 
-        <p className="text-xs text-gray-400 uppercase tracking-wider px-2 mb-2">Sales & Fulfillment</p>
-        <nav>
-          <ul className="space-y-1">
-            <NavItem icon={<ClipboardListIcon className="w-5 h-5"/>} label="Retail Orders" active={currentView === 'RETAIL_ORDERS'} onClick={() => setCurrentView('RETAIL_ORDERS')} />
-            <NavItem icon={<ArchiveBoxIcon className="w-5 h-5"/>} label="Subscription Boxes" active={currentView === 'SUBSCRIPTIONS'} onClick={() => setCurrentView('SUBSCRIPTIONS')} />
-            <NavItem icon={<TruckIcon className="w-5 h-5"/>} label="Hub & Logistics" active={currentView === 'LOGISTICS'} onClick={() => setCurrentView('LOGISTICS')} />
-            <NavItem icon={<ExclamationTriangleIcon className="w-5 h-5"/>} label="Dispute Mgmt" active={currentView === 'DISPUTES'} onClick={() => setCurrentView('DISPUTES')} />
-          </ul>
-        </nav>
+            <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wider px-2 mb-2">Customers</p>
+                <nav>
+                <ul className="space-y-1">
+                    <NavItem icon={<UserIcon className="w-5 h-5"/>} label="Retail Customers" active={currentView === 'RETAIL_CUSTOMERS'} onClick={() => setCurrentView('RETAIL_CUSTOMERS')} />
+                    <NavItem icon={<ArrowPathRoundedSquareIcon className="w-5 h-5"/>} label="Subscribers" active={currentView === 'SUBSCRIBERS'} onClick={() => setCurrentView('SUBSCRIBERS')} />
+                    <NavItem icon={<BuildingStorefrontIcon className="w-5 h-5"/>} label="Business Customers" active={currentView === 'BUSINESS_CUSTOMERS'} onClick={() => setCurrentView('BUSINESS_CUSTOMERS')} />
+                </ul>
+                </nav>
+            </div>
 
-         <hr className="border-gray-700 my-4" />
+            <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wider px-2 mb-2">Growth & Finance</p>
+                <nav>
+                <ul className="space-y-1">
+                    <NavItem icon={<CreditCardIcon className="w-5 h-5"/>} label="Payments" active={currentView === 'PAYMENTS'} onClick={() => setCurrentView('PAYMENTS')} />
+                    <NavItem icon={<DocumentTextIcon className="w-5 h-5"/>} label="Invoices" active={currentView === 'INVOICES'} onClick={() => setCurrentView('INVOICES')} />
+                    <NavItem icon={<MegaphoneIcon className="w-5 h-5"/>} label="Marketing" active={currentView === 'MARKETING'} onClick={() => setCurrentView('MARKETING')} />
+                    <NavItem icon={<ChartBarIcon className="w-5 h-5"/>} label="Analytics & Reports" active={currentView === 'ANALYTICS'} onClick={() => setCurrentView('ANALYTICS')} />
+                    <NavItem icon={<CalendarDaysIcon className="w-5 h-5"/>} label="Seasonality Intel" active={currentView === 'SEASONALITY'} onClick={() => setCurrentView('SEASONALITY')} />
+                </ul>
+                </nav>
+            </div>
+        </div>
 
-        <p className="text-xs text-gray-400 uppercase tracking-wider px-2 mb-2">Customers</p>
-        <nav>
-          <ul className="space-y-1">
-            <NavItem icon={<UserIcon className="w-5 h-5"/>} label="Retail Customers" active={currentView === 'RETAIL_CUSTOMERS'} onClick={() => setCurrentView('RETAIL_CUSTOMERS')} />
-            <NavItem icon={<ArrowPathRoundedSquareIcon className="w-5 h-5"/>} label="Subscribers" active={currentView === 'SUBSCRIBERS'} onClick={() => setCurrentView('SUBSCRIBERS')} />
-            <NavItem icon={<BuildingStorefrontIcon className="w-5 h-5"/>} label="Business Customers" active={currentView === 'BUSINESS_CUSTOMERS'} onClick={() => setCurrentView('BUSINESS_CUSTOMERS')} />
-          </ul>
-        </nav>
-
-        <hr className="border-gray-700 my-4" />
-
-        <p className="text-xs text-gray-400 uppercase tracking-wider px-2 mb-2">Growth & Finance</p>
-        <nav className="flex-grow">
-          <ul className="space-y-1">
-            <NavItem icon={<CreditCardIcon className="w-5 h-5"/>} label="Payments" active={currentView === 'PAYMENTS'} onClick={() => setCurrentView('PAYMENTS')} />
-            <NavItem icon={<DocumentTextIcon className="w-5 h-5"/>} label="Invoices" active={currentView === 'INVOICES'} onClick={() => setCurrentView('INVOICES')} />
-            <NavItem icon={<MegaphoneIcon className="w-5 h-5"/>} label="Marketing" active={currentView === 'MARKETING'} onClick={() => setCurrentView('MARKETING')} />
-            <NavItem icon={<ChartBarIcon className="w-5 h-5"/>} label="Analytics & Reports" active={currentView === 'ANALYTICS'} onClick={() => setCurrentView('ANALYTICS')} />
-             <NavItem icon={<CalendarDaysIcon className="w-5 h-5"/>} label="Seasonality Intel" active={currentView === 'SEASONALITY'} onClick={() => setCurrentView('SEASONALITY')} />
-          </ul>
-        </nav>
-
-        <div className="mt-auto">
-             <button onClick={onLogout} className="w-full text-left hover:bg-gray-700 p-2 rounded flex items-center gap-3"><LogoutIcon className="w-5 h-5"/>Logout</button>
+        <div className="mt-6 pt-4 border-t border-gray-700">
+             <button onClick={onLogout} className="w-full text-left hover:bg-gray-700 p-2 rounded flex items-center gap-3 text-red-300 hover:text-red-200"><LogoutIcon className="w-5 h-5"/>Logout</button>
         </div>
       </aside>
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-8 overflow-y-auto h-screen">
         {renderView()}
       </main>
     </div>
@@ -173,22 +180,83 @@ const AiInsight: React.FC<{ title: string, content: string }> = ({ title, conten
         <p className="text-indigo-700 mt-1 text-sm">{content}</p>
     </div>
 );
+
+const TableActionToolbar: React.FC<{
+    selectedCount: number;
+    onAdd: () => void;
+    onEdit: () => void;
+    onView: () => void;
+    onDelete: () => void;
+}> = ({ selectedCount, onAdd, onEdit, onView, onDelete }) => (
+    <div className="flex items-center gap-2 mb-4 bg-white p-2 rounded-lg shadow-sm border">
+        <button onClick={onAdd} className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-semibold transition-colors">
+            <PlusIcon className="w-4 h-4"/> Manual Add
+        </button>
+        <div className="h-6 w-px bg-gray-300 mx-2"></div>
+        <button onClick={onEdit} disabled={selectedCount !== 1} className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+            <PencilIcon className="w-4 h-4"/> Edit
+        </button>
+        <button onClick={onView} disabled={selectedCount !== 1} className="flex items-center gap-1 px-3 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+            <EyeIcon className="w-4 h-4"/> View Details
+        </button>
+        <button onClick={onDelete} disabled={selectedCount === 0} className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed ml-auto">
+            <TrashIcon className="w-4 h-4"/> Delete {selectedCount > 0 && `(${selectedCount})`}
+        </button>
+    </div>
+);
+
+// Generic hook to handle table selection
+const useTableSelection = () => {
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const handleSelect = (id: string) => {
+        const newSet = new Set(selected);
+        if (newSet.has(id)) newSet.delete(id);
+        else newSet.add(id);
+        setSelected(newSet);
+    };
+    const handleSelectAll = (ids: string[]) => {
+        if (selected.size === ids.length) setSelected(new Set());
+        else setSelected(new Set(ids));
+    };
+    return { selected, handleSelect, handleSelectAll, setSelected };
+}
+
 // #endregion
 
 // #region Views
 
 // Customer Views
 const RetailCustomersView: React.FC = () => {
-    const retailUsers: User[] = [mockUser];
+    const [retailUsers, setRetailUsers] = useState<User[]>([mockUser]);
+    const { selected, handleSelect, handleSelectAll, setSelected } = useTableSelection();
+
+    const handleDelete = () => {
+        if (confirm(`Delete ${selected.size} items?`)) {
+            setRetailUsers(prev => prev.filter(u => !selected.has(u.id)));
+            setSelected(new Set());
+        }
+    };
+
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6 text-gray-800">Retail Customers</h1>
+            <TableActionToolbar 
+                selectedCount={selected.size} 
+                onAdd={() => alert('Manual Add Customer Modal')}
+                onEdit={() => alert('Edit Customer Modal')}
+                onView={() => alert('View Customer Details Modal')}
+                onDelete={handleDelete}
+            />
             <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead><tr className="border-b"><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Order Count</th><th className="p-4">Lifetime Value</th></tr></thead>
+                    <thead><tr className="border-b">
+                        <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(retailUsers.map(u => u.id))} checked={selected.size > 0 && selected.size === retailUsers.length} /></th>
+                        <th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Order Count</th><th className="p-4">Lifetime Value</th>
+                    </tr></thead>
                     <tbody>
                         {retailUsers.map(user => (
-                            <tr key={user.id} className="border-b hover:bg-gray-50">
+                            <tr key={user.id} className={`border-b hover:bg-gray-50 ${selected.has(user.id) ? 'bg-blue-50' : ''}`}>
+                                <td className="p-4"><input type="checkbox" checked={selected.has(user.id)} onChange={() => handleSelect(user.id)} /></td>
                                 <td className="p-4 font-semibold">{user.name}</td>
                                 <td className="p-4">{user.email}</td>
                                 <td className="p-4 text-center">{user.orderHistory.length}</td>
@@ -204,21 +272,40 @@ const RetailCustomersView: React.FC = () => {
 };
 
 const SubscribersView: React.FC = () => {
-    const subscribers = [mockUser].filter(u => 
+    const [subscribers, setSubscribers] = useState([mockUser].filter(u => 
         u.orderHistory.some(o => o.items.some(i => i.type === 'subscription'))
-    );
+    ));
+    const { selected, handleSelect, handleSelectAll, setSelected } = useTableSelection();
+
+    const handleDelete = () => {
+        if(confirm(`Remove ${selected.size} subscribers?`)) {
+            setSubscribers(prev => prev.filter(s => !selected.has(s.id)));
+            setSelected(new Set());
+        }
+    }
     
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6 text-gray-800">Subscribers</h1>
+            <TableActionToolbar 
+                selectedCount={selected.size} 
+                onAdd={() => alert('Add Subscriber')}
+                onEdit={() => alert('Edit Subscription')}
+                onView={() => alert('View Subscription Details')}
+                onDelete={handleDelete}
+            />
             <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead><tr className="border-b"><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Active Subscriptions</th></tr></thead>
+                    <thead><tr className="border-b">
+                        <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(subscribers.map(u => u.id))} checked={selected.size > 0 && selected.size === subscribers.length} /></th>
+                        <th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Active Subscriptions</th>
+                    </tr></thead>
                     <tbody>
                         {subscribers.length > 0 ? subscribers.map(user => {
                             const subs = user.orderHistory.flatMap(o => o.items).filter(i => i.type === 'subscription');
                             return (
-                                <tr key={user.id} className="border-b hover:bg-gray-50">
+                                <tr key={user.id} className={`border-b hover:bg-gray-50 ${selected.has(user.id) ? 'bg-blue-50' : ''}`}>
+                                    <td className="p-4"><input type="checkbox" checked={selected.has(user.id)} onChange={() => handleSelect(user.id)} /></td>
                                     <td className="p-4 font-semibold">{user.name}</td>
                                     <td className="p-4">{user.email}</td>
                                     <td className="p-4">
@@ -229,7 +316,7 @@ const SubscribersView: React.FC = () => {
                                 </tr>
                             );
                         }) : (
-                            <tr><td colSpan={3} className="p-4 text-center text-gray-500">No active subscribers found.</td></tr>
+                            <tr><td colSpan={4} className="p-4 text-center text-gray-500">No active subscribers found.</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -239,16 +326,36 @@ const SubscribersView: React.FC = () => {
 };
 
 const BusinessCustomersView: React.FC = () => {
-    const businessUsers = mockPortalUsers.filter(u => u.role === 'business');
+    const [businessUsers, setBusinessUsers] = useState(mockPortalUsers.filter(u => u.role === 'business'));
+    const { selected, handleSelect, handleSelectAll, setSelected } = useTableSelection();
+
+    const handleDelete = () => {
+        if(confirm(`Remove ${selected.size} businesses?`)) {
+            setBusinessUsers(prev => prev.filter(u => !selected.has(u.id)));
+            setSelected(new Set());
+        }
+    }
+
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6 text-gray-800">Business Customers</h1>
+            <TableActionToolbar 
+                selectedCount={selected.size} 
+                onAdd={() => alert('Add Business Customer')}
+                onEdit={() => alert('Edit Business Details')}
+                onView={() => alert('View Business Profile')}
+                onDelete={handleDelete}
+            />
             <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead><tr className="border-b"><th className="p-4">Business Name</th><th className="p-4">Contact Email</th><th className="p-4">Total Purchases (Simulated)</th></tr></thead>
+                    <thead><tr className="border-b">
+                        <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(businessUsers.map(u => u.id))} checked={selected.size > 0 && selected.size === businessUsers.length} /></th>
+                        <th className="p-4">Business Name</th><th className="p-4">Contact Email</th><th className="p-4">Total Purchases (Simulated)</th>
+                    </tr></thead>
                     <tbody>
                         {businessUsers.map(user => (
-                            <tr key={user.id} className="border-b hover:bg-gray-50">
+                            <tr key={user.id} className={`border-b hover:bg-gray-50 ${selected.has(user.id) ? 'bg-blue-50' : ''}`}>
+                                <td className="p-4"><input type="checkbox" checked={selected.has(user.id)} onChange={() => handleSelect(user.id)} /></td>
                                 <td className="p-4 font-semibold">{user.name}</td>
                                 <td className="p-4">{user.email}</td>
                                 <td className="p-4 font-bold text-center">5</td>
@@ -267,18 +374,17 @@ const SuppliesCurationView: React.FC<{
     setSourcedProducts: React.Dispatch<React.SetStateAction<SourcedProduct[]>>,
     onPushToPublish: (productIds: string[]) => void
 }> = ({ products, setSourcedProducts, onPushToPublish }) => {
+    
     const [filters, setFilters] = useState({ name: '', category: 'all', supplier: 'all', unit: 'all' });
     const [uploadedFiles, setUploadedFiles] = useState<FileList | null>(null);
     const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
     const [editMode, setEditMode] = useState(false);
     const [editedData, setEditedData] = useState<Record<string, Partial<SourcedProduct>>>({});
 
-    // Dynamic options for filters
     const categories = useMemo(() => [...new Set(products.map(p => p.category).filter(Boolean))], [products]);
     const suppliers = useMemo(() => [...new Set(products.map(p => p.supplierName).filter(Boolean))], [products]);
     const units = useMemo(() => [...new Set(products.map(p => p.unit).filter(Boolean))], [products]);
     
-    // Memoized filtering logic
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
             const nameMatch = p.name.toLowerCase().includes(filters.name.toLowerCase()) || (p.baseProductName || '').toLowerCase().includes(filters.name.toLowerCase());
@@ -289,7 +395,6 @@ const SuppliesCurationView: React.FC<{
         });
     }, [products, filters]);
 
-    // Handlers
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFilters(prev => ({ ...prev, [name]: value }));
@@ -405,6 +510,13 @@ const SuppliesCurationView: React.FC<{
         setSelectedProducts(new Set());
     };
 
+    const handleDeleteSelected = () => {
+        if (confirm(`Delete ${selectedProducts.size} items?`)) {
+            setSourcedProducts(prev => prev.filter(p => !selectedProducts.has(p.id)));
+            setSelectedProducts(new Set());
+        }
+    };
+
     return (
         <div>
             <h1 className="text-3xl font-bold mb-2 text-gray-800">Supplies & Product Curation</h1>
@@ -449,6 +561,11 @@ const SuppliesCurationView: React.FC<{
                         </>
                     ) : (
                         <button onClick={() => setEditMode(true)} className="bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600">Enable Manual Adjustments</button>
+                    )}
+                    {selectedProducts.size > 0 && (
+                        <button onClick={handleDeleteSelected} className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 flex items-center gap-2">
+                            <TrashIcon className="w-5 h-5" /> Delete ({selectedProducts.size})
+                        </button>
                     )}
                 </div>
                 <button onClick={handlePushSelected} disabled={selectedProducts.size === 0 || editMode} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed">
@@ -498,273 +615,253 @@ const SuppliesCurationView: React.FC<{
     );
 };
 
-
-const SupplierManagementView: React.FC = () => (
-    <div>
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">Supplier / Farmer Management</h1>
-        <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
-            <table className="w-full text-left">
-                <thead>
-                    <tr className="border-b">
-                        <th className="p-4">Supplier Name</th>
-                        <th className="p-4">Location</th>
-                        <th className="p-4">Specialty</th>
-                        <th className="p-4">AI Performance Score</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {mockFarmers.map(farmer => (
-                        <tr key={farmer.id} className="border-b hover:bg-gray-50">
-                            <td className="p-4 font-semibold">{farmer.name}</td>
-                            <td className="p-4">{farmer.location}</td>
-                            <td className="p-4">{farmer.specialty.join(', ')}</td>
-                            <td className="p-4 font-bold text-center">{farmer.performanceScore || 'N/A'}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-        <AiInsight title="Supplier Reliability" content="Sunnyvale Orchards (Score: 95) consistently delivers high-quality produce on time. Prioritize procurement from them for key fruit products." />
-    </div>
-);
-
-const ProductPublishingView: React.FC<{ 
-    products: SourcedProduct[],
-    allProducts: SourcedProduct[],
-    onPublish: (productId: string, price: number, target: ('retail' | 'wholesale')[], quantity: number, moq?: number) => void,
-    isFiltered?: boolean,
-    onClearFilter?: () => void
+const ProductPublishingView: React.FC<{
+    products: SourcedProduct[];
+    allProducts: SourcedProduct[];
+    onPublish: (id: string, price: number, target: ('retail' | 'wholesale')[], qty: number, moq?: number) => void;
+    isFiltered?: boolean;
+    onClearFilter?: () => void;
 }> = ({ products, allProducts, onPublish, isFiltered, onClearFilter }) => {
-    const [price, setPrice] = useState<Record<string, string>>({});
-    const [quantity, setQuantity] = useState<Record<string, string>>({});
-    const [moq, setMoq] = useState<Record<string, string>>({});
-    const [target, setTarget] = useState<Record<string, ('retail' | 'wholesale')[]>>({});
-
-    const cheapestProductsMap = useMemo(() => {
-        const groups: { [key: string]: SourcedProduct[] } = {};
-        allProducts.forEach(p => {
-            const key = p.baseProductName || p.name;
-            if (!groups[key]) groups[key] = [];
-            groups[key].push(p);
-        });
-
-        const cheapestMap = new Map<string, SourcedProduct>();
-        Object.values(groups).forEach(group => {
-            if (group.length > 0) {
-                const cheapest = group.reduce((min, p) => p.costPrice < min.costPrice ? p : min, group[0]);
-                cheapestMap.set(cheapest.baseProductName || cheapest.name, cheapest);
-            }
-        });
-        return cheapestMap;
-    }, [allProducts]);
-
-    const processedProducts = useMemo(() => {
-        const sorted = [...products].sort((a, b) => {
-            const nameA = a.baseProductName || a.name;
-            const nameB = b.baseProductName || b.name;
-            if (nameA < nameB) return -1;
-            if (nameA > nameB) return 1;
-            return a.costPrice - b.costPrice;
-        });
-
-        const seenCategories = new Set<string>();
-        return sorted.map(p => {
-            const category = p.baseProductName || p.name;
-            const isFirst = !seenCategories.has(category);
-            if (isFirst) seenCategories.add(category);
-            return { ...p, isFirstInCategory: isFirst };
-        });
-    }, [products]);
-
-    const handlePublish = (id: string) => {
-        const product = products.find(p => p.id === id);
-        const finalPrice = price[id] ? parseFloat(price[id]) : (product?.costPrice || 0);
-        const finalQuantity = parseInt(quantity[id] || '0', 10);
-        const finalMoq = moq[id] ? parseInt(moq[id], 10) : undefined;
-        const finalTarget = target[id] || [];
-
-        if (finalPrice <= 0) {
-            alert('Please set a valid selling price.');
-            return;
-        }
-        if (finalQuantity <= 0) {
-            alert('Please set a valid available quantity.');
-            return;
-        }
-        if (finalTarget.length === 0) {
-            alert('Please select at least one target channel.');
-            return;
-        }
-        onPublish(id, finalPrice, finalTarget, finalQuantity, finalMoq);
-    };
-
     return (
-         <div>
-            <h1 className="text-3xl font-bold mb-2 text-gray-800">Product Publishing</h1>
-            <p className="text-gray-600 mb-6">Finalize pricing and publish curated products to your customer channels.</p>
-            {isFiltered && (
-                <div className="mb-4">
-                    <button onClick={onClearFilter} className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 hover:underline">
-                        &larr; Show all unpublished products
-                    </button>
-                    <p className="text-xs text-gray-500 mt-1">Showing only products pushed from the curation view.</p>
-                </div>
-            )}
+        <div>
+            <h1 className="text-3xl font-bold mb-6 text-gray-800">Product Publishing</h1>
+             {isFiltered && (
+                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 flex justify-between items-center">
+                     <p className="text-yellow-700">Filtering by specific products pushed from curation.</p>
+                     <button onClick={onClearFilter} className="text-sm underline text-yellow-800 hover:text-yellow-900">Clear Filter</button>
+                 </div>
+             )}
             <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
-                 <table className="w-full text-left text-sm">
-                    <thead className="border-b bg-gray-50">
-                        <tr>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">Product</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">Supplier</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">Cost Price</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">Unit</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">Normalized Price</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">Cheapest Price Per Unit</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider flex items-center gap-2"><SparklesIcon className="w-5 h-5 text-indigo-500" /> AI Insight</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">Set Selling Price</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">Set Avail. Qty</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">MOQ</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">Publish To</th>
-                            <th className="p-4 font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="border-b">
+                            <th className="p-4">Product</th>
+                            <th className="p-4">Supplier</th>
+                            <th className="p-4">Cost Price</th>
+                            <th className="p-4">Suggested Price (Markup)</th>
+                            <th className="p-4">Publish Target</th>
+                            <th className="p-4">Avail Qty / MOQ</th>
+                            <th className="p-4">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {processedProducts.map(product => {
-                            const category = product.baseProductName || product.name;
-                            const cheapest = cheapestProductsMap.get(category);
-                            return (
-                                <tr key={product.id} className="border-b hover:bg-gray-50 align-top">
-                                    <td className="p-4 font-semibold">{product.name}</td>
-                                    <td className="p-4">{product.supplierName}</td>
-                                    <td className="p-4 font-mono">${product.costPrice.toFixed(2)}</td>
-                                    <td className="p-4">{product.unit}</td>
-                                    <td className="p-4">—</td>
-                                    <td className="p-4 font-semibold">{product.isFirstInCategory && cheapest ? <span className="text-green-700 bg-green-100 px-2 py-1 rounded">${cheapest.costPrice.toFixed(2)} ({cheapest.supplierName})</span> : '—'}</td>
-                                    <td className="p-4 text-indigo-700">{product.isFirstInCategory && cheapest ? `Best price for ${category}. Recommend prioritizing procurement.` : '—' }</td>
-                                    <td className="p-4">
-                                        <input 
-                                            type="number" 
-                                            step="0.01" 
-                                            placeholder="e.g., 2.99"
-                                            value={price[product.id] ?? product.costPrice}
-                                            className="p-2 border rounded-md w-28"
-                                            onChange={(e) => setPrice(p => ({...p, [product.id]: e.target.value}))}
-                                        />
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-2">
-                                            <input 
-                                                type="number" 
-                                                step="1" 
-                                                placeholder="e.g., 100"
-                                                className="p-2 border rounded-md w-20"
-                                                onChange={(e) => setQuantity(q => ({...q, [product.id]: e.target.value}))}
-                                            />
-                                            <span className="text-gray-500 text-sm">{product.unit}</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <input 
-                                            type="number" 
-                                            step="1" 
-                                            placeholder="MOQ"
-                                            className="p-2 border rounded-md w-20"
-                                            onChange={(e) => setMoq(m => ({...m, [product.id]: e.target.value}))}
-                                        />
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex flex-col text-sm gap-1">
-                                            <label><input type="checkbox" className="mr-1" onChange={e => {
-                                                const current = target[product.id] || [];
-                                                setTarget(t => ({...t, [product.id]: e.target.checked ? [...current, 'retail'] : current.filter(x => x !== 'retail') }))
-                                            }}/> Retail</label>
-                                            <label><input type="checkbox" className="mr-1" onChange={e => {
-                                                const current = target[product.id] || [];
-                                                setTarget(t => ({...t, [product.id]: e.target.checked ? [...current, 'wholesale'] : current.filter(x => x !== 'wholesale') }))
-                                            }}/> Wholesale</label>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <button onClick={() => handlePublish(product.id)} className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700">
-                                            Publish
-                                        </button>
-                                    </td>
-                                </tr>
-                            )
-                        })}
+                        {products.length > 0 ? products.map(p => (
+                            <ProductPublishRow key={p.id} product={p} onPublish={onPublish} />
+                        )) : (
+                             <tr><td colSpan={7} className="p-4 text-center text-gray-500">No products waiting to be published. Go to 'Supplies & Curation' to source more.</td></tr>
+                        )}
                     </tbody>
                 </table>
-                {products.length === 0 && <p className="text-center p-8 text-gray-500">
-                    {isFiltered ? "The selected products have been published." : "All curated products have been published."}
-                </p>}
             </div>
-            <AiInsight title="Optimal Stocking Levels" content="Based on demand forecasts, we recommend publishing at least 50 bunches of Organic Carrots and 30 lbs of Heirloom Tomatoes for the upcoming delivery cycle." />
+             <AiInsight title="Market Opportunity" content="Retail prices for 'Organic Kale' have risen by 10% in the local market. You can safely increase your margin to 60%." />
+        </div>
+    );
+};
+
+const ProductPublishRow: React.FC<{
+    product: SourcedProduct;
+    onPublish: (id: string, price: number, target: ('retail' | 'wholesale')[], qty: number, moq?: number) => void;
+}> = ({ product, onPublish }) => {
+    const [price, setPrice] = useState<number>(Number((product.costPrice * 1.4).toFixed(2))); // Default 40% margin
+    const [targets, setTargets] = useState<('retail' | 'wholesale')[]>(['retail']);
+    const [qty, setQty] = useState<number>(product.availableQuantity || 0);
+    const [moq, setMoq] = useState<number>(1);
+
+    const handleTargetChange = (target: 'retail' | 'wholesale') => {
+        setTargets(prev => prev.includes(target) ? prev.filter(t => t !== target) : [...prev, target]);
+    };
+    
+    const margin = ((price - product.costPrice) / product.costPrice) * 100;
+
+    return (
+        <tr className="border-b hover:bg-gray-50">
+            <td className="p-4 font-semibold">{product.name}</td>
+            <td className="p-4">{product.supplierName}</td>
+            <td className="p-4">${product.costPrice.toFixed(2)}</td>
+            <td className="p-4">
+                <div className="flex items-center gap-2">
+                    <span className="text-gray-500">$</span>
+                    <input type="number" step="0.01" value={price} onChange={e => setPrice(parseFloat(e.target.value))} className="w-20 p-1 border rounded" />
+                    <span className={`text-xs font-bold ${margin < 30 ? 'text-orange-500' : 'text-green-600'}`}>({margin.toFixed(0)}%)</span>
+                </div>
+            </td>
+            <td className="p-4">
+                <div className="flex flex-col gap-1">
+                    <label className="inline-flex items-center">
+                        <input type="checkbox" checked={targets.includes('retail')} onChange={() => handleTargetChange('retail')} className="form-checkbox h-4 w-4 text-green-600"/>
+                        <span className="ml-2 text-sm">Retail</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                        <input type="checkbox" checked={targets.includes('wholesale')} onChange={() => handleTargetChange('wholesale')} className="form-checkbox h-4 w-4 text-green-600"/>
+                        <span className="ml-2 text-sm">Wholesale</span>
+                    </label>
+                </div>
+            </td>
+            <td className="p-4">
+                 <div className="flex flex-col gap-1">
+                    <label className="flex items-center text-xs text-gray-500">
+                        Qty: <input type="number" value={qty} onChange={e => setQty(parseInt(e.target.value))} className="ml-1 w-16 p-1 border rounded text-black" />
+                    </label>
+                     <label className="flex items-center text-xs text-gray-500">
+                        MOQ: <input type="number" value={moq} onChange={e => setMoq(parseInt(e.target.value))} className="ml-1 w-16 p-1 border rounded text-black" />
+                    </label>
+                </div>
+            </td>
+            <td className="p-4">
+                <button 
+                    onClick={() => onPublish(product.id, price, targets, qty, moq)} 
+                    disabled={targets.length === 0}
+                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm font-semibold"
+                >
+                    Publish
+                </button>
+            </td>
+        </tr>
+    );
+};
+
+
+const SupplierManagementView: React.FC = () => {
+    const [farmers, setFarmers] = useState(mockFarmers);
+    const { selected, handleSelect, handleSelectAll, setSelected } = useTableSelection();
+
+    const handleDelete = () => {
+        if(confirm(`Delete ${selected.size} suppliers?`)) {
+            setFarmers(prev => prev.filter(f => !selected.has(f.id)));
+            setSelected(new Set());
+        }
+    }
+
+    return (
+        <div>
+            <h1 className="text-3xl font-bold mb-6 text-gray-800">Supplier / Farmer Management</h1>
+            <TableActionToolbar 
+                selectedCount={selected.size} 
+                onAdd={() => alert('Add Supplier')}
+                onEdit={() => alert('Edit Supplier')}
+                onView={() => alert('View Supplier Profile')}
+                onDelete={handleDelete}
+            />
+            <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="border-b">
+                            <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(farmers.map(f => f.id))} checked={selected.size > 0 && selected.size === farmers.length} /></th>
+                            <th className="p-4">Supplier Name</th>
+                            <th className="p-4">Location</th>
+                            <th className="p-4">Specialty</th>
+                            <th className="p-4">AI Performance Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {farmers.map(farmer => (
+                            <tr key={farmer.id} className={`border-b hover:bg-gray-50 ${selected.has(farmer.id) ? 'bg-blue-50' : ''}`}>
+                                <td className="p-4"><input type="checkbox" checked={selected.has(farmer.id)} onChange={() => handleSelect(farmer.id)} /></td>
+                                <td className="p-4 font-semibold">{farmer.name}</td>
+                                <td className="p-4">{farmer.location}</td>
+                                <td className="p-4">{farmer.specialty.join(', ')}</td>
+                                <td className="p-4 font-bold text-center">{farmer.performanceScore || 'N/A'}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <AiInsight title="Supplier Reliability" content="Sunnyvale Orchards (Score: 95) consistently delivers high-quality produce on time. Prioritize procurement from them for key fruit products." />
+        </div>
+    );
+};
+
+const PublishedProductsView: React.FC<{ title: string, products: SourcedProduct[] }> = ({ title, products }) => {
+    const { selected, handleSelect, handleSelectAll } = useTableSelection();
+
+    return (
+        <div>
+            <h1 className="text-3xl font-bold mb-6 text-gray-800">{title}</h1>
+            <p className="text-gray-600 mb-6 -mt-4">This is the final list of products available to customers on this channel.</p>
+            <TableActionToolbar 
+                selectedCount={selected.size} 
+                onAdd={() => alert('Manually Add Published Product')}
+                onEdit={() => alert('Edit Published Product')}
+                onView={() => alert('View Product Details')}
+                onDelete={() => alert('Delete/Unpublish functionality would trigger here')}
+            />
+            <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="border-b">
+                            <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(products.map(p => p.id))} checked={selected.size > 0 && selected.size === products.length} /></th>
+                            <th className="p-4">Product</th>
+                            <th className="p-4">Supplier</th>
+                            <th className="p-4">Cost Price</th>
+                            <th className="p-4">Selling Price</th>
+                            <th className="p-4">Unit</th>
+                            <th className="p-4">Avail. Qty</th>
+                            <th className="p-4">MOQ</th>
+                            <th className="p-4">Margin</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {products.map(product => (
+                            <tr key={product.id} className={`border-b hover:bg-gray-50 ${selected.has(product.id) ? 'bg-blue-50' : ''}`}>
+                                <td className="p-4"><input type="checkbox" checked={selected.has(product.id)} onChange={() => handleSelect(product.id)} /></td>
+                                <td className="p-4 font-semibold">{product.name}</td>
+                                <td className="p-4">{product.supplierName}</td>
+                                <td className="p-4">${product.costPrice.toFixed(2)}</td>
+                                <td className="p-4 font-bold text-gray-800">${product.sellingPrice?.toFixed(2)}</td>
+                                <td className="p-4">{product.unit}</td>
+                                <td className="p-4 font-bold">
+                                    {product.availableQuantity !== undefined && product.availableQuantity < 10 && (
+                                        <div className={`flex items-center gap-2 ${product.availableQuantity === 0 ? 'text-red-500' : 'text-orange-500'}`}>
+                                            <ExclamationTriangleIcon className="w-5 h-5"/>
+                                            <span>{product.availableQuantity}</span>
+                                        </div>
+                                    )}
+                                    {product.availableQuantity !== undefined && product.availableQuantity >= 10 && (
+                                        <span>{product.availableQuantity}</span>
+                                    )}
+                                </td>
+                                <td className="p-4">{product.moq || '-'}</td>
+                                <td className="p-4 font-semibold text-green-700">
+                                    {product.sellingPrice ? `${(((product.sellingPrice - product.costPrice) / product.costPrice) * 100).toFixed(0)}%` : 'N/A'}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <AiInsight title="Pricing Optimization" content="The current 40% margin on 'Organic Carrots' is below the category average of 55%. Consider a price increase to $2.79 to improve profitability without significantly impacting demand." />
         </div>
     );
 };
 
 
-const PublishedProductsView: React.FC<{ title: string, products: SourcedProduct[] }> = ({ title, products }) => (
-    <div>
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">{title}</h1>
-         <p className="text-gray-600 mb-6 -mt-4">This is the final list of products available to customers on this channel.</p>
-        <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
-             <table className="w-full text-left">
-                <thead>
-                    <tr className="border-b">
-                        <th className="p-4">Product</th>
-                        <th className="p-4">Supplier</th>
-                        <th className="p-4">Cost Price</th>
-                        <th className="p-4">Selling Price</th>
-                        <th className="p-4">Unit</th>
-                        <th className="p-4">Avail. Qty</th>
-                        <th className="p-4">MOQ</th>
-                        <th className="p-4">Margin</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {products.map(product => (
-                        <tr key={product.id} className="border-b hover:bg-gray-50">
-                            <td className="p-4 font-semibold">{product.name}</td>
-                            <td className="p-4">{product.supplierName}</td>
-                            <td className="p-4">${product.costPrice.toFixed(2)}</td>
-                            <td className="p-4 font-bold text-gray-800">${product.sellingPrice?.toFixed(2)}</td>
-                            <td className="p-4">{product.unit}</td>
-                            <td className="p-4 font-bold">
-                                {product.availableQuantity !== undefined && product.availableQuantity < 10 && (
-                                    <div className={`flex items-center gap-2 ${product.availableQuantity === 0 ? 'text-red-500' : 'text-orange-500'}`}>
-                                        <ExclamationTriangleIcon className="w-5 h-5"/>
-                                        <span>{product.availableQuantity}</span>
-                                    </div>
-                                )}
-                                {product.availableQuantity !== undefined && product.availableQuantity >= 10 && (
-                                    <span>{product.availableQuantity}</span>
-                                )}
-                            </td>
-                            <td className="p-4">{product.moq || '-'}</td>
-                            <td className="p-4 font-semibold text-green-700">
-                                {product.sellingPrice ? `${(((product.sellingPrice - product.costPrice) / product.costPrice) * 100).toFixed(0)}%` : 'N/A'}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-        <AiInsight title="Pricing Optimization" content="The current 40% margin on 'Organic Carrots' is below the category average of 55%. Consider a price increase to $2.79 to improve profitability without significantly impacting demand." />
-    </div>
-);
-
-
 // Sales & Fulfillment Views
 const RetailOrdersView: React.FC = () => {
-    const retailOrders = mockOrders.filter(o => o.userId.startsWith('u'));
+    const [retailOrders, setRetailOrders] = useState(mockOrders.filter(o => o.userId.startsWith('u')));
+    const { selected, handleSelect, handleSelectAll, setSelected } = useTableSelection();
+
+    const handleDelete = () => {
+        if(confirm(`Delete ${selected.size} orders?`)) {
+            setRetailOrders(prev => prev.filter(o => !selected.has(o.id)));
+            setSelected(new Set());
+        }
+    }
+
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6 text-gray-800">Retail Orders Management</h1>
+            <TableActionToolbar 
+                selectedCount={selected.size} 
+                onAdd={() => alert('Create Manual Order')}
+                onEdit={() => alert('Edit Order')}
+                onView={() => alert('View Order Details')}
+                onDelete={handleDelete}
+            />
             <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
                 <table className="w-full text-left">
                     <thead>
                         <tr className="border-b">
+                            <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(retailOrders.map(o => o.id))} checked={selected.size > 0 && selected.size === retailOrders.length} /></th>
                             <th className="p-4">Order ID</th>
                             <th className="p-4">Date</th>
                             <th className="p-4">Customer</th>
@@ -778,7 +875,8 @@ const RetailOrdersView: React.FC = () => {
                         {retailOrders.map(order => {
                             const user = order.userId === mockUser.id ? mockUser : null;
                             return (
-                                <tr key={order.id} className="border-b hover:bg-gray-50">
+                                <tr key={order.id} className={`border-b hover:bg-gray-50 ${selected.has(order.id) ? 'bg-blue-50' : ''}`}>
+                                    <td className="p-4"><input type="checkbox" checked={selected.has(order.id)} onChange={() => handleSelect(order.id)} /></td>
                                     <td className="p-4 font-mono text-sm">{order.id}</td>
                                     <td className="p-4">{order.date}</td>
                                     <td className="p-4">{user?.name || 'N/A'}</td>
@@ -806,7 +904,10 @@ const SubscriptionBoxManagementView: React.FC<{ boxes: SubscriptionBox[] }> = ({
             <div className="flex flex-col md:flex-row gap-8">
                 <aside className="md:w-1/3">
                     <div className="bg-white p-4 rounded-lg shadow-md">
-                        <h2 className="font-bold mb-2">Select a Box</h2>
+                        <div className="flex justify-between items-center mb-2">
+                            <h2 className="font-bold">Select a Box</h2>
+                            <button className="text-green-600 hover:bg-green-100 p-1 rounded"><PlusIcon className="w-5 h-5"/></button>
+                        </div>
                         <ul className="space-y-2">
                            {boxes.map(box => (
                                <li key={box.id}>
@@ -824,8 +925,17 @@ const SubscriptionBoxManagementView: React.FC<{ boxes: SubscriptionBox[] }> = ({
                 <main className="flex-1">
                     {selectedBox ? (
                          <div className="bg-white p-6 rounded-lg shadow-md">
-                            <h2 className="text-2xl font-bold mb-1">{selectedBox.type} Box ({selectedBox.size})</h2>
-                            <p className="text-gray-600 mb-4">Current Delivery Cycle Contents</p>
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-1">{selectedBox.type} Box ({selectedBox.size})</h2>
+                                    <p className="text-gray-600">Current Delivery Cycle Contents</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button className="text-blue-600 hover:bg-blue-50 p-2 rounded"><PencilIcon className="w-5 h-5"/></button>
+                                    <button className="text-red-600 hover:bg-red-50 p-2 rounded"><TrashIcon className="w-5 h-5"/></button>
+                                </div>
+                            </div>
+                            
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                                 {selectedBox.currentContents?.map(productId => {
                                     const product = mockProducts.find(p => p.id === productId);
@@ -857,26 +967,35 @@ const LogisticsManagementView: React.FC = () => (
         <h1 className="text-3xl font-bold mb-6 text-gray-800">Logistics Management</h1>
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-bold mb-4">Drivers</h2>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold">Drivers</h2>
+                    <button className="text-green-600 hover:bg-green-50 p-1 rounded"><PlusIcon className="w-5 h-5"/></button>
+                </div>
                 <table className="w-full text-left">
-                    <thead><tr className="border-b"><th className="p-2">Name</th><th className="p-2">Vehicle</th><th className="p-2">Status</th></tr></thead>
+                    <thead><tr className="border-b"><th className="p-2">Name</th><th className="p-2">Vehicle</th><th className="p-2">Status</th><th className="p-2">Action</th></tr></thead>
                     <tbody>
-                        {mockDrivers.map(d => <tr key={d.id} className="border-b hover:bg-gray-50"><td className="p-2">{d.name}</td><td className="p-2">{d.vehicleId}</td><td className="p-2">{d.status}</td></tr>)}
+                        {mockDrivers.map(d => <tr key={d.id} className="border-b hover:bg-gray-50"><td className="p-2">{d.name}</td><td className="p-2">{d.vehicleId}</td><td className="p-2">{d.status}</td><td className="p-2"><button className="text-blue-600"><PencilIcon className="w-4 h-4"/></button></td></tr>)}
                     </tbody>
                 </table>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-bold mb-4">Vehicles</h2>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold">Vehicles</h2>
+                    <button className="text-green-600 hover:bg-green-50 p-1 rounded"><PlusIcon className="w-5 h-5"/></button>
+                </div>
                  <table className="w-full text-left">
-                    <thead><tr className="border-b"><th className="p-2">Plate</th><th className="p-2">Capacity</th><th className="p-2">Status</th></tr></thead>
+                    <thead><tr className="border-b"><th className="p-2">Plate</th><th className="p-2">Capacity</th><th className="p-2">Status</th><th className="p-2">Action</th></tr></thead>
                     <tbody>
-                        {mockVehicles.map(v => <tr key={v.id} className="border-b hover:bg-gray-50"><td className="p-2">{v.licensePlate}</td><td className="p-2">{v.capacity} kg</td><td className="p-2">{v.status}</td></tr>)}
+                        {mockVehicles.map(v => <tr key={v.id} className="border-b hover:bg-gray-50"><td className="p-2">{v.licensePlate}</td><td className="p-2">{v.capacity} kg</td><td className="p-2">{v.status}</td><td className="p-2"><button className="text-blue-600"><PencilIcon className="w-4 h-4"/></button></td></tr>)}
                     </tbody>
                 </table>
             </div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md mt-8">
-            <h2 className="text-xl font-bold mb-4">Active Routes</h2>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Active Routes</h2>
+                <button className="text-green-600 hover:bg-green-50 p-1 rounded"><PlusIcon className="w-5 h-5"/></button>
+            </div>
             <table className="w-full text-left">
                 <thead><tr className="border-b"><th className="p-2">Route</th><th className="p-2">Driver</th><th className="p-2">Orders</th><th className="p-2">Status</th><th className="p-2">Est. Completion</th></tr></thead>
                 <tbody>
@@ -889,7 +1008,15 @@ const LogisticsManagementView: React.FC = () => (
 );
 
 const DisputeManagementView: React.FC = () => {
-    const [tickets] = useState<Ticket[]>(mockTickets);
+    const [tickets, setTickets] = useState<Ticket[]>(mockTickets);
+    const { selected, handleSelect, handleSelectAll, setSelected } = useTableSelection();
+
+    const handleDelete = () => {
+        if(confirm(`Delete ${selected.size} tickets?`)) {
+            setTickets(prev => prev.filter(t => !selected.has(t.id)));
+            setSelected(new Set());
+        }
+    }
 
     const getPriorityClass = (priority: Ticket['priority']) => {
         switch (priority) {
@@ -904,10 +1031,18 @@ const DisputeManagementView: React.FC = () => {
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6 text-gray-800">Dispute Management</h1>
+            <TableActionToolbar 
+                selectedCount={selected.size} 
+                onAdd={() => alert('Create Ticket')}
+                onEdit={() => alert('Edit Ticket')}
+                onView={() => alert('View Ticket Details')}
+                onDelete={handleDelete}
+            />
             <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
                 <table className="w-full text-left">
                     <thead>
                         <tr className="border-b">
+                            <th className="p-4 w-10"><input type="checkbox" onChange={(e) => handleSelectAll(tickets.map(t => t.id))} checked={selected.size > 0 && selected.size === tickets.length} /></th>
                             <th className="p-4">Ticket ID</th>
                             <th className="p-4">Subject</th>
                             <th className="p-4">User</th>
@@ -918,7 +1053,8 @@ const DisputeManagementView: React.FC = () => {
                     </thead>
                     <tbody>
                         {tickets.map(ticket => (
-                            <tr key={ticket.id} className="border-b hover:bg-gray-50">
+                            <tr key={ticket.id} className={`border-b hover:bg-gray-50 ${selected.has(ticket.id) ? 'bg-blue-50' : ''}`}>
+                                <td className="p-4"><input type="checkbox" checked={selected.has(ticket.id)} onChange={() => handleSelect(ticket.id)} /></td>
                                 <td className="p-4 font-mono text-sm">{ticket.id}</td>
                                 <td className="p-4 font-semibold">{ticket.subject}</td>
                                 <td className="p-4">{ticket.userName} <span className="text-xs text-gray-500">({ticket.userRole})</span></td>
