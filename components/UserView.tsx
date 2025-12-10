@@ -48,44 +48,51 @@ const Header: React.FC<{
 
     return (
         <header className="bg-white shadow-md sticky top-0 z-40">
-            <div className="container mx-auto px-6 py-3 flex justify-between items-center">
-                <div onClick={() => onNavigate('SHOP')} className="flex items-center cursor-pointer">
+            <div className="container mx-auto px-6 py-3 flex justify-between items-center relative">
+                {/* Left: Logo */}
+                <div onClick={() => onNavigate('SHOP')} className="flex items-center cursor-pointer z-10">
                     <LeafIcon className="h-8 w-8 text-green-600" />
                     <h1 className="text-2xl font-bold text-gray-800 ml-2">Farm2Flat</h1>
                 </div>
-                <div className="flex items-center gap-4">
-                     <form onSubmit={handlePostalCodeSubmit} className="hidden md:flex items-center border rounded-lg overflow-hidden">
+
+                {/* Center: Main Navigation */}
+                <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
+                    <button onClick={() => onNavigate('SHOP')} className="text-gray-800 hover:text-green-600 font-medium text-lg">Shop</button>
+                    <button onClick={() => onNavigate('SUBSCRIPTIONS')} className="text-gray-800 hover:text-green-600 font-medium text-lg">Produce Boxes</button>
+                </nav>
+
+                {/* Right: Search, Profile, Cart */}
+                <div className="flex items-center gap-4 z-10">
+                     <form onSubmit={handlePostalCodeSubmit} className="hidden lg:flex items-center border rounded-lg overflow-hidden">
                         <MapPinIcon className="w-5 h-5 text-gray-400 ml-2" />
                         <input
                             type="text"
                             value={localPostalCode}
                             onChange={(e) => setLocalPostalCode(e.target.value)}
                             placeholder="A1A 1A1"
-                            className="px-2 py-1 text-sm focus:outline-none"
+                            className="px-2 py-1 text-sm focus:outline-none w-24"
                             aria-label="Postal Code"
                         />
                         <button type="submit" className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-sm font-semibold">
                             Update
                         </button>
                     </form>
-                    <nav className="flex items-center space-x-4">
-                        <button onClick={() => onNavigate('SHOP')} className="text-gray-600 hover:text-green-600">Shop</button>
-                        <button onClick={() => onNavigate('SUBSCRIPTIONS')} className="text-gray-600 hover:text-green-600">Subscriptions</button>
-                        {isAuthenticated ? (
-                            <div className="relative group">
-                                <button onClick={() => onNavigate('PROFILE')} className="text-gray-600 hover:text-green-600 flex items-center gap-1">
-                                    <UserIcon className="h-6 w-6" />
-                                    <span className="hidden sm:inline text-sm">Dashboard</span>
-                                </button>
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 invisible group-hover:visible">
-                                     <button onClick={() => onNavigate('PROFILE')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">My Dashboard</button>
-                                     <button onClick={onSignOut} className="block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left">Sign Out</button>
-                                </div>
+                    
+                    {isAuthenticated ? (
+                        <div className="relative group">
+                            <button onClick={() => onNavigate('PROFILE')} className="text-gray-600 hover:text-green-600 flex items-center gap-1">
+                                <UserIcon className="h-6 w-6" />
+                                <span className="hidden sm:inline text-sm">Dashboard</span>
+                            </button>
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 invisible group-hover:visible">
+                                    <button onClick={() => onNavigate('PROFILE')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">My Dashboard</button>
+                                    <button onClick={onSignOut} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">Sign Out</button>
                             </div>
-                        ) : (
-                             <button onClick={() => onNavigate('AUTH')} className="text-gray-600 hover:text-green-600 font-semibold">Sign In</button>
-                        )}
-                    </nav>
+                        </div>
+                    ) : (
+                            <button onClick={() => onNavigate('AUTH')} className="text-gray-600 hover:text-green-600 font-semibold">Sign In</button>
+                    )}
+                    
                     <button onClick={() => onNavigate('CART')} className="relative" aria-label={`Cart with ${cartItemCount} items`}>
                         <ShoppingCartIcon className="h-6 w-6 text-gray-600 hover:text-green-600" />
                         {cartItemCount > 0 && (
@@ -895,13 +902,13 @@ const PromoSection: React.FC<{ onStartCustomBox: () => void, onNavigate: (view: 
             <div className="absolute inset-0 bg-black/30 flex flex-col justify-center items-center text-center p-8">
                 <h3 className="text-3xl font-bold text-white mb-4">Pick a produce box that works for you</h3>
                 <p className="text-white text-lg mb-6 max-w-sm">Skip the hassle of choosing one by one.</p>
-                <button onClick={() => onNavigate('SUBSCRIPTIONS')} className="bg-white/90 text-gray-900 px-8 py-3 font-semibold hover:bg-white transition-colors">View Grocery Boxes</button>
+                <button onClick={() => onNavigate('SUBSCRIPTIONS')} className="bg-white/90 text-gray-900 px-8 py-3 font-semibold hover:bg-white transition-colors">View Produce Boxes</button>
             </div>
         </div>
         <div className="relative h-[400px] group overflow-hidden">
             <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1000&auto=format&fit=crop" alt="Farm fresh quality" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
             <div className="absolute inset-0 bg-black/30 flex flex-col justify-center items-center text-center p-8">
-                <h3 className="text-3xl font-bold text-white mb-4">Customize your own grocery box</h3>
+                <h3 className="text-3xl font-bold text-white mb-4">Customize your own produce box</h3>
                 <button onClick={onStartCustomBox} className="bg-white/90 text-gray-900 px-8 py-3 font-semibold hover:bg-white transition-colors">Get a quote</button>
             </div>
         </div>
@@ -958,9 +965,6 @@ const Footer: React.FC = () => (
         </div>
     </footer>
 );
-
-// ... (Rest of UserView.tsx components like RecipeDetailModal and CustomBoxBuilderModal remain mostly unchanged) ...
-// Re-inserting required components to make file complete and runnable without missing definitions
 
 const RecipeDetailModal: React.FC<{
     recipe: Recipe;
@@ -1368,12 +1372,13 @@ const getRegionalProductData = (product: Product, postalCode: string) => {
     let hash = 0;
     for (let i = 0; i < postalPrefix.length; i++) {
         // Fix: Explicit cast to number for arithmetic operation
-        const charCode: number = postalPrefix.charCodeAt(i);
+        const charCode = postalPrefix.charCodeAt(i);
         hash = ((hash << 5) - hash) + charCode;
         hash |= 0;
     }
-    // Fix: Explicitly type accumulator in reduce
-    const productHash = product.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+    // Fix: Explicitly type accumulator in reduce and ensure ID is string
+    const productIdStr = String(product.id);
+    const productHash = productIdStr.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
     const combinedHash = Math.abs(hash + productHash);
 
     // 10% chance item is unavailable in this region
@@ -1381,8 +1386,10 @@ const getRegionalProductData = (product: Product, postalCode: string) => {
     
     // Price variance +/- 10% based on region
     const priceVariance = ((combinedHash % 20) - 10) / 100;
-    // Fix: Ensure price is number before arithmetic
-    const regionalPrice = product.price * (1 + priceVariance);
+    
+    // Fix: Ensure price is treated as number for arithmetic
+    const basePrice = Number(product.price);
+    const regionalPrice = basePrice * (1 + priceVariance);
 
     return {
         ...product,
@@ -1702,7 +1709,7 @@ const UserView: React.FC = () => {
             case 'SUBSCRIPTIONS':
                 return (
                     <div className="container mx-auto px-6 py-8">
-                        <h2 className="text-3xl font-bold text-gray-800 mb-6">Subscription Boxes</h2>
+                        <h2 className="text-3xl font-bold text-gray-800 mb-6">Produce Boxes</h2>
                         <div className="space-y-8">
                             {mockSubscriptionBoxes.map(s => 
                                 <SubscriptionCard 
